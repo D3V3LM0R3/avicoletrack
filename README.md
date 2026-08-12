@@ -35,3 +35,5 @@ Stage 1 - Project Preparation
 ## Prototype Goal
 
 Create an operational prototype that allows farm workers and management to record, monitor, analyze and manage poultry-farm operations.
+
+Connection to GitHub. 
