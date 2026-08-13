@@ -21,3 +21,23 @@ This directory contains database-related resources.
 - Notifications
 
 The database design will be implemented and validated during the database stage.
+
+## Current Database
+
+Database name:
+avicoletrack_db
+
+Main tables:
+
+- users
+- farms
+- flocks
+- daily_reports
+- orders
+- deliveries
+- events
+- notifications
+
+Schema file:
+
+database/schema/001_initial_schema.sql
