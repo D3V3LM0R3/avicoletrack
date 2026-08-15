@@ -1,21 +1,36 @@
 # AvicoleTrack Backend
 
-The backend will provide:
+Backend API for the AvicoleTrack poultry farm management platform.
 
-- Authentication
-- Authorization
-- REST API
-- Farm management
-- Daily reports
-- Production calculations
-- Anomaly detection
-- Orders
-- Deliveries
-- Events
-- Notifications
-- Analytics
-- Market analysis
+## Technology
 
-Backend technology:
+- Python
+- FastAPI
+- Uvicorn
+- SQLAlchemy
+- PostgreSQL
+- Psycopg
+- Pydantic
 
-FastAPI + Python
+## Development Server
+
+From the backend directory:
+
+```bash
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+### API Documentation
+
+When the server is running:
+http://127.0.0.1:8000/docs
+
+Current API Areas
+
+· Health
+· Farms
+· Flocks
+· Daily Reports
+· Database
+
+The backend connects to the local PostgreSQL database:
+avicoletrack_db
