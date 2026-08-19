@@ -24,9 +24,5 @@ def list_farms(db: Session = Depends(get_db)):
     return result.scalars().all()
 
 
-@router.get("/{farm_id}", response_model=FarmResponse)
-def get_farm(farm_id: int, db: Session = Depends(get_db)):
-    farm = db.get(Farm, farm_id)
-    if farm is None:
-        raise HTTPException(status_code=404, detail="Farm not found")
-    return farm
+@router.get("/{farm_id }", response_model=FarmResponse)
+def get_farm()
