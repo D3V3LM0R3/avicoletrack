@@ -1,0 +1,18 @@
+CREATE TABLE enterprises (
+    id BIGSERIAL PRIMARY KEY,
+
+    name VARCHAR(150) NOT NULL,
+
+    owner_id BIGINT NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT enterprises_owner_fk
+        FOREIGN KEY (owner_id)
+        REFERENCES users(id)
+        ON DELETE RESTRICT
+);

@@ -7,10 +7,10 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT users_role_check CHECK (role IN (
-        'avicultor',
-        'fermier',
-        'chef_entreprise',
-        'directeur_responsable'
+        'OWNER',
+        'MANAGER',
+        'WORKER',
+        'WORKER'
     ))
 );
 

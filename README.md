@@ -30,7 +30,32 @@ tests/      - Automated and manual tests
 
 ## Development Status
 
-Stage 1 - Project Preparation
+**Current stage: Step 4 — Authentication, Membership & Authorization**
+
+Step 4 is complete at the prototype/backend level.
+
+Implemented:
+
+- User registration and login
+- JWT authentication
+- Password hashing
+- User roles
+- Enterprise ownership
+- Multiple farms per enterprise
+- Farm-scoped memberships
+- OWNER / MANAGER / WORKER authorization
+- Farm-scoped flock access
+- OWNER-only farm creation
+- OWNER-only personnel management
+- Invitation-based MANAGER/WORKER registration
+- Invitation expiration
+- Invitation cancellation
+- Invitation reactivation before expiration
+- One-time invitation tokens
+- Farm membership activation/deactivation
+- Protected farm and flock endpoints
+
+---
 
 ## Prototype Goal
 
