@@ -21,6 +21,12 @@ ENV/
 dist/
 build/
 .next/
+.expo/
+.expo-shared/
+
+# Native app builds
+android/
+ios/
 
 # IDE
 .vscode/

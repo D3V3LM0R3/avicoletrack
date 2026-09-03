@@ -18,9 +18,12 @@ from app.models.farm_membership import FarmMembership
 from app.models.invitation import Invitation
 from app.models.user import User
 from app.schemas.auth import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     LoginResponse,
     RegisterRequest,
     UserResponse,
+    UserUpdate,
 )
 
 
@@ -223,10 +226,44 @@ def login(
         role=user.role,
     )
 
+    enterprise = db.execute(
+        select(Enterprise)
+        .where(Enterprise.owner_id == user.id, Enterprise.is_active.is_(True))
+        .order_by(Enterprise.id)
+    ).scalars().first()
+
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": user,
+        "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role,
+             "is_active": user.is_active, "enterprise_name": enterprise.name if enterprise else None},
+    }
+
+
+@router.post(
+    "/forgot-password",
+    response_model=ForgotPasswordResponse,
+)
+def forgot_password(
+    data: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    email = data.email.lower()
+    user = db.execute(
+        select(User).where(User.email == email)
+    ).scalar_one_or_none()
+
+    if user is None:
+        return {
+            "message": "If an account exists for this email, a reset link has been generated.",
+            "email": email,
+            "reset_requested": False,
+        }
+
+    return {
+        "message": "If an account exists for this email, a reset link has been generated.",
+        "email": email,
+        "reset_requested": True,
     }
 
 
@@ -236,5 +273,29 @@ def login(
 )
 def get_me(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
+    enterprise = db.execute(
+        select(Enterprise)
+        .where(Enterprise.owner_id == current_user.id, Enterprise.is_active.is_(True))
+        .order_by(Enterprise.id)
+    ).scalars().first()
+    return {"id": current_user.id, "name": current_user.name, "email": current_user.email,
+            "role": current_user.role, "is_active": current_user.is_active,
+            "enterprise_name": enterprise.name if enterprise else None}
+
+
+@router.patch(
+    "/me",
+    response_model=UserResponse,
+)
+def update_me(
+    data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.name = data.name.strip()
+    current_user.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(current_user)
     return current_user

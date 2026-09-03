@@ -30,9 +30,10 @@ tests/      - Automated and manual tests
 
 ## Development Status
 
-**Current stage: Step 4 — Authentication, Membership & Authorization**
+**Current stage: Beta completed.** Core farm operations, capital management,
+communication, exports, and the game experience are implemented and validated.
 
-Step 4 is complete at the prototype/backend level.
+The project has moved beyond a simple prototype and is now being shaped as a real beta product for poultry enterprise management.
 
 Implemented:
 
@@ -54,11 +55,29 @@ Implemented:
 - One-time invitation tokens
 - Farm membership activation/deactivation
 - Protected farm and flock endpoints
+- Daily reporting and KPI calculations
+- Alerts and notifications
+- Farm comparison analytics
+- Event and market-pricing workflows
 
 ---
 
-## Prototype Goal
+## Completed Beta Capabilities
 
-Create an operational prototype that allows farm workers and management to record, monitor, analyze and manage poultry-farm operations.
+The beta supports reliable operations for owners, managers, and workers, with
+clear business visibility across farms.
+
+Delivered additions include the owner capital dashboard with FCFA profit/loss
+periods and farm comparisons, enterprise chat with direct/group conversations,
+and the endless chicken game with offline score synchronization and a shared
+leaderboard.
+
+## Validation
+
+```bash
+python -m unittest discover -s tests -p 'test_*.py' -v
+cd backend && python -m compileall -q app
+cd frontend && npx tsc --noEmit && npm run lint
+```
 
 Connection to GitHub. 

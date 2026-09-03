@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     String,
+    JSON,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -48,6 +49,12 @@ class FarmMembership(Base):
         Boolean,
         nullable=False,
         default=True,
+    )
+
+    permissions: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        default=lambda: {"create_flock": False, "create_event": False, "send_notification": False},
     )
 
     __table_args__ = (

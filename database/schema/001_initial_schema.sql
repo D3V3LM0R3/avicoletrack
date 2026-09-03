@@ -9,7 +9,6 @@ CREATE TABLE users (
     CONSTRAINT users_role_check CHECK (role IN (
         'OWNER',
         'MANAGER',
-        'WORKER',
         'WORKER'
     ))
 );
@@ -19,6 +18,9 @@ CREATE TABLE farms (
     name VARCHAR(150) NOT NULL,
     location VARCHAR(255),
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    egg_stock INTEGER NOT NULL DEFAULT 0,
+    cartons INTEGER NOT NULL DEFAULT 0,
+    alveoli INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -52,13 +54,14 @@ CREATE TABLE daily_reports (
     remaining_eggs INTEGER NOT NULL DEFAULT 0,
     notes TEXT,
     created_by BIGINT,
+    feed_used_bags NUMERIC(10,2) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT daily_reports_farm_fk FOREIGN KEY (farm_id)
         REFERENCES farms(id) ON DELETE CASCADE,
     CONSTRAINT daily_reports_flock_fk FOREIGN KEY (flock_id)
-        REFERENCES flocks(id) ON DELETE SET NULL,
+        REFERENCES flocks(id) ON DELETE RESTRICT,
     CONSTRAINT daily_reports_user_fk FOREIGN KEY (created_by)
         REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT daily_reports_bird_count_check CHECK (bird_count >= 0),
@@ -157,6 +160,17 @@ CREATE TABLE notifications (
         REFERENCES events(id) ON DELETE SET NULL
 );
 
+CREATE TABLE market_prices (
+    id BIGSERIAL PRIMARY KEY,
+    product VARCHAR(150) NOT NULL,
+    region VARCHAR(100) NOT NULL,
+    price NUMERIC(12,2) NOT NULL CHECK (price > 0),
+    unit VARCHAR(50) NOT NULL,
+    source VARCHAR(255) NOT NULL,
+    price_date DATE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_daily_reports_farm_date ON daily_reports(farm_id, report_date);
 CREATE INDEX idx_daily_reports_created_by ON daily_reports(created_by);
 CREATE INDEX idx_orders_order_date ON orders(order_date);
@@ -165,3 +179,4 @@ CREATE INDEX idx_deliveries_order ON deliveries(order_id);
 CREATE INDEX idx_events_farm_date ON events(farm_id, event_date);
 CREATE INDEX idx_notifications_user ON notifications(user_id);
 CREATE INDEX idx_notifications_scheduled ON notifications(scheduled_at);
+CREATE INDEX idx_market_prices_region_date ON market_prices(region, price_date DESC);

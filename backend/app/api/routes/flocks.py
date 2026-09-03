@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,7 +14,7 @@ from app.db.session import get_db
 from app.models.farm import Farm
 from app.models.flock import Flock
 from app.models.user import User
-from app.schemas.flock import FlockCreate, FlockResponse
+from app.schemas.flock import FlockCreate, FlockResponse, FlockUpdate
 
 
 router = APIRouter(
@@ -60,9 +62,12 @@ def create_flock(
     # supplied somewhere else by the client.
     flock = Flock(
         farm_id=farm.id,
+        name=(flock_data.name.strip() if flock_data.name else None),
         bird_count=flock_data.bird_count,
+        initial_bird_count=flock_data.bird_count,
         breed=flock_data.breed,
         start_date=flock_data.start_date,
+        updated_at=datetime.utcnow(),
     )
 
     db.add(flock)
@@ -77,6 +82,7 @@ def create_flock(
     response_model=list[FlockResponse],
 )
 def list_flocks(
+    include_archived: bool = Query(False),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -107,6 +113,7 @@ def list_flocks(
                 Enterprise.owner_id == current_user.id,
                 Enterprise.is_active.is_(True),
                 Farm.active.is_(True),
+                *(([]) if include_archived else [Flock.archived.is_(False)]),
             )
             .order_by(Flock.id)
         )
@@ -126,6 +133,7 @@ def list_flocks(
                 FarmMembership.user_id == current_user.id,
                 FarmMembership.is_active.is_(True),
                 Farm.active.is_(True),
+                *(([]) if include_archived else [Flock.archived.is_(False)]),
             )
             .order_by(Flock.id)
         )
@@ -164,4 +172,25 @@ def get_flock(
         db,
     )
 
+    return flock
+
+
+@router.patch("/{flock_id}", response_model=FlockResponse)
+def update_flock(
+    flock_id: int,
+    data: FlockUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    flock = db.get(Flock, flock_id)
+    if flock is None:
+        raise HTTPException(status_code=404, detail="Flock not found")
+    require_flock_access(current_user, flock_id, db)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(flock, field, value)
+    if data.archived is not None:
+        flock.archived_at = datetime.utcnow() if data.archived else None
+    flock.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(flock)
     return flock

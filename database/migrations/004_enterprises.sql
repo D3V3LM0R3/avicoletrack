@@ -1,4 +1,4 @@
-CREATE TABLE enterprises (
+CREATE TABLE IF NOT EXISTS enterprises (
     id BIGSERIAL PRIMARY KEY,
 
     name VARCHAR(150) NOT NULL,

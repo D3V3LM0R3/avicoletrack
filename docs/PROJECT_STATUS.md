@@ -2,23 +2,28 @@
 
 ## Current Stage
 
-Stage 1 - Project Preparation
+Stage 2 - Backend implementation and API validation
 
 ## Current Step
 
-Step 1 - Prepare the project and GitHub structure
+Backend permission module completed; remaining work is test coverage and regression validation.
 
 ## Completed
 
 - GitHub repository created
 - Initial project structure created
+- Required backend permission functions added to the permission layer
+- Missing enterprise access guard restored for route compatibility
+- Duplicate flock permission definitions consolidated into a single working implementation
 
 ## In Progress
 
-- Development environment preparation
+- Validation of backend permission checks
+- Test coverage for access-control behavior
 
 ## Upcoming
 
 - Frontend initialization
 - Backend initialization
 - Database initialization
+- Final QA and automated tests

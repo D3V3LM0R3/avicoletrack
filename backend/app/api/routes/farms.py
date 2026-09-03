@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.models.farm_membership import FarmMembership
@@ -58,6 +58,11 @@ def create_farm(
         name=data.name,
         location=data.location,
         active=True,
+        food_type=data.food_type,
+        food_quantity=data.food_quantity,
+        food_unit=data.food_unit,
+        water_quantity=data.water_quantity,
+        water_unit=data.water_unit,
         created_at=datetime.utcnow(),
     )
 
@@ -72,11 +77,12 @@ def create_farm(
     response_model=list[FarmResponse],
 )
 def list_farms(
+    include_inactive: bool = Query(False),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     # OWNER:
-    # Return all active farms belonging to enterprises
+    # Owners need inactive farms too so they can reactivate them.
     # owned by this user.
     if current_user.role == "OWNER":
         farms = db.execute(
@@ -88,7 +94,7 @@ def list_farms(
             .where(
                 Enterprise.owner_id == current_user.id,
                 Enterprise.is_active.is_(True),
-                Farm.active.is_(True),
+                *(([]) if include_inactive else [Farm.active.is_(True)]),
             )
             .order_by(Farm.id)
         ).scalars().all()
@@ -193,6 +199,10 @@ def update_farm(
 
     if data.active is not None:
         farm.active = data.active
+    for field in ("food_type", "food_quantity", "food_unit", "water_quantity", "water_unit"):
+        value = getattr(data, field)
+        if value is not None:
+            setattr(farm, field, value)
 
     db.commit()
     db.refresh(farm)

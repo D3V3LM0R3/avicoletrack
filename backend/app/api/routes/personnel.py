@@ -24,12 +24,34 @@ from app.schemas.invitation import (
     InvitationCreatedResponse,
     InvitationResponse,
 )
+from app.schemas.farm_membership import FarmMembershipUpdate
 
 
 router = APIRouter(
     prefix="/personnel",
     tags=["Personnel"],
 )
+
+
+@router.get("/farms/{farm_id}/my-permissions")
+def get_my_farm_permissions(
+    farm_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    farm = db.get(Farm, farm_id)
+    if farm is None:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    if current_user.role == "OWNER":
+        return {"permissions": {"create_flock": True, "create_event": True, "send_notification": True, "confirm_stock_movement": True, "export_daily_reports": True, "export_event_reports": True, "export_movement_reports": True}}
+    membership = db.execute(select(FarmMembership).where(
+        FarmMembership.farm_id == farm_id,
+        FarmMembership.user_id == current_user.id,
+        FarmMembership.is_active.is_(True),
+    )).scalar_one_or_none()
+    if membership is None:
+        raise HTTPException(status_code=403, detail="You do not have access to this farm")
+    return {"permissions": membership.permissions or {}}
 
 
 @router.post(
@@ -194,6 +216,7 @@ def list_farm_members(
 
     members = db.execute(
         select(
+            FarmMembership.id.label("membership_id"),
             User.id,
             User.name,
             User.email,
@@ -201,6 +224,7 @@ def list_farm_members(
             FarmMembership.role.label("farm_role"),
             FarmMembership.is_active,
             FarmMembership.created_at,
+            FarmMembership.permissions,
         )
         .join(
             FarmMembership,
@@ -214,6 +238,7 @@ def list_farm_members(
 
     return [
         {
+            "membership_id": member.membership_id,
             "id": member.id,
             "name": member.name,
             "email": member.email,
@@ -221,9 +246,50 @@ def list_farm_members(
             "farm_role": member.farm_role,
             "is_active": member.is_active,
             "created_at": member.created_at,
+            "permissions": member.permissions or {},
         }
         for member in members
     ]
+
+
+@router.patch("/memberships/{membership_id}/permissions")
+def update_membership_permissions(membership_id: int, permissions: dict, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    membership = db.get(FarmMembership, membership_id)
+    if membership is None:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    farm = db.get(Farm, membership.farm_id)
+    if farm is None:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    require_enterprise_owner(current_user, farm.enterprise_id, db)
+    allowed = {"create_flock", "create_event", "send_notification", "confirm_stock_movement", "export_daily_reports", "export_event_reports", "export_movement_reports"}
+    membership.permissions = {key: bool(permissions.get(key, False)) for key in allowed}
+    db.commit()
+    return {"membership_id": membership.id, "permissions": membership.permissions}
+
+
+@router.patch("/memberships/{membership_id}")
+def update_membership(membership_id: int, data: FarmMembershipUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    membership = db.get(FarmMembership, membership_id)
+    if membership is None:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    current_farm = db.get(Farm, membership.farm_id)
+    target_farm = db.get(Farm, data.farm_id)
+    if current_farm is None or target_farm is None:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    require_enterprise_owner(current_user, current_farm.enterprise_id, db)
+    if target_farm.enterprise_id != current_farm.enterprise_id:
+        raise HTTPException(status_code=403, detail="The target farm must belong to the same enterprise")
+    duplicate = db.execute(select(FarmMembership).where(
+        FarmMembership.user_id == membership.user_id,
+        FarmMembership.farm_id == data.farm_id,
+        FarmMembership.id != membership.id,
+    )).scalar_one_or_none()
+    if duplicate:
+        raise HTTPException(status_code=409, detail="This member already belongs to the target farm")
+    membership.farm_id = data.farm_id
+    membership.role = data.role.value
+    db.commit()
+    return {"membership_id": membership.id, "farm_id": membership.farm_id, "role": membership.role}
 
 
 @router.patch(

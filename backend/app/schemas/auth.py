@@ -33,13 +33,28 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: str
     is_active: bool
+    enterprise_name: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True
     )
 
 
+class UserUpdate(BaseModel):
+    name: str = Field(min_length=2, max_length=150)
+
+
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+    email: EmailStr
+    reset_requested: bool

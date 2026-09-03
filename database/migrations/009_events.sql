@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_events_farm_date ON events(farm_id, event_date);

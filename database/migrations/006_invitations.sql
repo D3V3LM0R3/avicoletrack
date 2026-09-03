@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS invitations (
 
     enterprise_id BIGINT NOT NULL,
     farm_id BIGINT NOT NULL,
-
     invited_email VARCHAR(255) NOT NULL,
 
     role VARCHAR(30) NOT NULL,

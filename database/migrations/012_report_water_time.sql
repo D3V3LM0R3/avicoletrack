@@ -1,0 +1,2 @@
+ALTER TABLE daily_reports
+    ADD COLUMN IF NOT EXISTS water_used_liters NUMERIC(10,2) NOT NULL DEFAULT 0;

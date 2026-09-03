@@ -11,11 +11,12 @@ class Settings(BaseSettings):
     # safe default for local development: a SQLite file in the project
     database_url: str
 
-    frontend_url: str = "http://localhost:5173"
+    frontend_url: str = "https://avicoletrack.cm"
 
     jwt_secret: str
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    market_price_url: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

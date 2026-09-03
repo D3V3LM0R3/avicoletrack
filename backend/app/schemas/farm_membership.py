@@ -11,6 +11,11 @@ class FarmMembershipCreate(BaseModel):
     role: FarmRole
 
 
+class FarmMembershipUpdate(BaseModel):
+    farm_id: int
+    role: FarmRole
+
+
 class FarmMembershipResponse(BaseModel):
     id: int
     user_id: int
