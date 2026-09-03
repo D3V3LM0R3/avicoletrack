@@ -1,12 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.core.invitations import hash_invitation_token
+from app.core.email import send_auth_email
+from app.core.invitations import generate_invitation_token, hash_invitation_token
 from app.core.security import (
     create_access_token,
     hash_password,
@@ -20,6 +22,9 @@ from app.models.user import User
 from app.schemas.auth import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    ResetPasswordRequest,
+    EmailVerificationRequest,
+    MessageResponse,
     LoginResponse,
     RegisterRequest,
     UserResponse,
@@ -57,6 +62,7 @@ def register(
         )
 
     now = datetime.utcnow()
+    verification_token = generate_invitation_token()
 
     # ==========================================================
     # INVITATION REGISTRATION
@@ -123,6 +129,9 @@ def register(
             is_active=True,
             created_at=now,
             updated_at=now,
+            email_verified=False,
+            email_verification_token_hash=hash_invitation_token(verification_token),
+            email_verification_expires_at=now + timedelta(hours=24),
         )
 
         db.add(user)
@@ -145,6 +154,12 @@ def register(
         db.commit()
         db.refresh(user)
 
+        send_auth_email(
+            email,
+            "Vérifiez votre adresse e-mail",
+            f"Ouvrez {settings.frontend_url}/verify-email?token={verification_token}",
+        )
+
         return user
 
     # ==========================================================
@@ -165,6 +180,9 @@ def register(
         is_active=True,
         created_at=now,
         updated_at=now,
+        email_verified=False,
+        email_verification_token_hash=hash_invitation_token(verification_token),
+        email_verification_expires_at=now + timedelta(hours=24),
     )
 
     db.add(user)
@@ -182,6 +200,12 @@ def register(
 
     db.commit()
     db.refresh(user)
+
+    send_auth_email(
+        email,
+        "Vérifiez votre adresse e-mail",
+        f"Ouvrez {settings.frontend_url}/verify-email?token={verification_token}",
+    )
 
     return user
 
@@ -215,6 +239,12 @@ def login(
             detail="Invalid email or password",
         )
 
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email address before signing in",
+        )
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -235,8 +265,9 @@ def login(
     return {
         "access_token": token,
         "token_type": "bearer",
-        "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role,
-             "is_active": user.is_active, "enterprise_name": enterprise.name if enterprise else None},
+           "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role,
+               "is_active": user.is_active, "email_verified": user.email_verified,
+               "enterprise_name": enterprise.name if enterprise else None},
     }
 
 
@@ -260,11 +291,49 @@ def forgot_password(
             "reset_requested": False,
         }
 
+    reset_token = generate_invitation_token()
+    user.password_reset_token_hash = hash_invitation_token(reset_token)
+    user.password_reset_expires_at = datetime.utcnow() + timedelta(hours=1)
+    db.commit()
+    send_auth_email(
+        email,
+        "Réinitialisation de votre mot de passe",
+        f"Ouvrez {settings.frontend_url}/reset-password?token={reset_token}",
+    )
     return {
         "message": "If an account exists for this email, a reset link has been generated.",
         "email": email,
         "reset_requested": True,
     }
+
+
+@router.post("/verify-email", response_model=MessageResponse)
+def verify_email(data: EmailVerificationRequest, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(
+        User.email_verification_token_hash == hash_invitation_token(data.token),
+    )).scalar_one_or_none()
+    if user is None or user.email_verification_expires_at is None or user.email_verification_expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Invalid or expired verification link")
+    user.email_verified = True
+    user.email_verification_token_hash = None
+    user.email_verification_expires_at = None
+    db.commit()
+    return {"message": "Email address verified"}
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(
+        User.password_reset_token_hash == hash_invitation_token(data.token),
+    )).scalar_one_or_none()
+    if user is None or user.password_reset_expires_at is None or user.password_reset_expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+    user.password_hash = hash_password(data.password)
+    user.password_reset_token_hash = None
+    user.password_reset_expires_at = None
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Password reset successfully"}
 
 
 @router.get(
@@ -282,6 +351,7 @@ def get_me(
     ).scalars().first()
     return {"id": current_user.id, "name": current_user.name, "email": current_user.email,
             "role": current_user.role, "is_active": current_user.is_active,
+            "email_verified": current_user.email_verified,
             "enterprise_name": enterprise.name if enterprise else None}
 
 

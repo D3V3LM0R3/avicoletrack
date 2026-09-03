@@ -9,13 +9,11 @@ import {
   Text,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Radius, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { FormField } from '@/components/ui/FormField';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { listFarms, login, register } from '@/lib/api';
-import { setAuthToken } from '@/lib/auth-storage';
+import { register } from '@/lib/api';
 
 export default function RegisterInvitationScreen() {
   const { token } = useLocalSearchParams<{ token?: string }>();
@@ -48,16 +46,13 @@ export default function RegisterInvitationScreen() {
     setIsLoading(true);
     try {
       await register({ name: name.trim(), email, password, invitation_token: invitationCode.trim() });
-      const result = await login(email.trim(), password);
-      await setAuthToken(result.access_token);
-      await AsyncStorage.setItem('user_data', JSON.stringify(result.user));
-
-      if (result.user.role === 'OWNER') {
-        const farms = await listFarms();
-        router.replace(farms.length === 0 ? '/setup' : '/(tabs)');
-      } else {
-        router.replace('/(tabs)');
-      }
+      Alert.alert(
+        'Vérifiez votre e-mail',
+        `Un lien de confirmation a été envoyé à ${email.trim().toLowerCase()}. Confirmez votre adresse avant de vous connecter.`,
+        [{ text: 'Se connecter', onPress: () => router.replace('/(auth)/login') }],
+      );
+      setIsLoading(false);
+      return;
     } catch (error) {
       Alert.alert('Erreur', error instanceof Error ? error.message : "Impossible de créer le compte. Veuillez réessayer.");
       setIsLoading(false);

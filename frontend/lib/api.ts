@@ -36,7 +36,7 @@ const parseResponse = async (response: Response) => {
       throw new Error('Adresse e-mail ou mot de passe incorrect.');
     }
     if (response.status === 403) {
-      throw new Error('Ce compte est désactivé ou ne dispose pas des autorisations nécessaires.');
+      throw new Error(typeof body?.detail === 'string' ? body.detail : 'Ce compte est désactivé ou ne dispose pas des autorisations nécessaires.');
     }
     throw new Error(typeof body?.detail === 'string' ? body.detail : 'Request failed');
   }
@@ -146,6 +146,18 @@ export const requestPasswordReset = (email: string): Promise<{ message: string; 
   request('/auth/forgot-password', {
     method: 'POST',
     body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+
+export const resetPassword = (token: string, password: string): Promise<{ message: string }> =>
+  request('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
+
+export const verifyEmail = (token: string): Promise<{ message: string }> =>
+  request('/auth/verify-email', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
   });
 
 export const updateProfile = (name: string): Promise<User> =>

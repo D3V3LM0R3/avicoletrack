@@ -33,6 +33,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: str
     is_active: bool
+    email_verified: bool = True
     enterprise_name: str | None = None
 
     model_config = ConfigDict(
@@ -58,3 +59,16 @@ class ForgotPasswordResponse(BaseModel):
     message: str
     email: EmailStr
     reset_requested: bool
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class EmailVerificationRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+
+
+class MessageResponse(BaseModel):
+    message: str

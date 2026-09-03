@@ -51,3 +51,29 @@ class User(Base):
         DateTime,
         nullable=False,
     )
+
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    email_verification_token_hash: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    password_reset_token_hash: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
