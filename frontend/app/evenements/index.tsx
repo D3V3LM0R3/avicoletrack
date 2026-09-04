@@ -504,7 +504,7 @@ export default function EvenementsScreen() {
             {financialType && <TextInput style={styles.input} placeholder="Montant en FCFA" keyboardType="decimal-pad" value={financialAmount} onChangeText={setFinancialAmount} />}
 
             {canCreateEvent ? (
-              <PrimaryButton label={saving ? 'Enregistrement...' : editingEvent ? 'Enregistrer les modifications' : 'Créer l&apos;événement'} onPress={save} disabled={saving} />
+              <PrimaryButton label={saving ? 'Enregistrement...' : editingEvent ? 'Enregistrer les modifications' : 'Créer événement'} onPress={save} disabled={saving} />
             ) : (
               <Text style={styles.hintText}>Vous n&apos;avez pas la permission de créer un événement pour cette ferme.</Text>
             )}
