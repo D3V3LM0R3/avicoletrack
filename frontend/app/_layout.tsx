@@ -49,6 +49,12 @@ export default function RootLayout() {
 
   useEffect(() => {
     let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        setAuthenticated(false);
+        setRole(null);
+      }
+    }, 3000);
 
     const loadAuth = async () => {
       try {
@@ -77,6 +83,7 @@ export default function RootLayout() {
     void loadAuth();
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [routeKey]);
 

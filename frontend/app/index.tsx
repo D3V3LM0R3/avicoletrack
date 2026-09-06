@@ -12,6 +12,8 @@ export default function Index() {
   const [route, setRoute] = useState<Href>('/(auth)/onboarding');
 
   useEffect(() => {
+    const timeout = setTimeout(() => setIsLoading(false), 5000);
+
     const checkAppState = async () => {
       try {
         const [token, hasSeenOnboarding] = await Promise.all([
@@ -38,11 +40,13 @@ export default function Index() {
         console.error("Erreur lors de la vérification de l'état :", error);
         setRoute('/(auth)/onboarding');
       } finally {
+        clearTimeout(timeout);
         setTimeout(() => setIsLoading(false), 1200);
       }
     };
 
     checkAppState();
+    return () => clearTimeout(timeout);
   }, []);
 
   if (isLoading) {
