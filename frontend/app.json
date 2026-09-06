@@ -43,6 +43,7 @@
       "expo-secure-store"
     ],
     "experiments": {
+      "baseUrl": "/avicoletrack",
       "typedRoutes": true,
       "reactCompiler": true
     }
