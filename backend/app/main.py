@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from urllib.parse import urlsplit
 
 from app.core.config import settings
 
@@ -29,9 +30,16 @@ app = FastAPI(
     version="0.1.0",
 )
 
+frontend_url_parts = urlsplit(settings.frontend_url)
+frontend_origin = (
+    f"{frontend_url_parts.scheme}://{frontend_url_parts.netloc}"
+    if frontend_url_parts.scheme and frontend_url_parts.netloc
+    else settings.frontend_url
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url],
+    allow_origins=[settings.frontend_url, frontend_origin],
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
