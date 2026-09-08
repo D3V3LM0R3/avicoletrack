@@ -71,6 +71,13 @@ export default function LoginScreen() {
           <Text style={styles.subtitle}>Gestion avicole professionnelle</Text>
         </View>
 
+        <View style={styles.verificationNotice}>
+          <MaterialIcons name="mark-email-unread" size={20} color={Colors.onPrimaryContainer} />
+          <Text style={styles.verificationNoticeText}>
+            Après votre inscription, confirmez votre adresse e-mail avec le lien reçu avant de vous connecter.
+          </Text>
+        </View>
+
         <View style={styles.card}>
           <FormField
             label="Adresse e-mail"
@@ -128,6 +135,8 @@ const styles = StyleSheet.create({
   logo: { width: 80, height: 80, borderRadius: Radius.lg, backgroundColor: Colors.surfaceContainerHigh, borderWidth: 1, borderColor: Colors.outlineVariant, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   appName: { ...Typography.headlineLg, fontSize: 28, color: Colors.onSurface },
   subtitle: { ...Typography.bodyMd, color: Colors.onSurfaceVariant, marginTop: 6 },
+  verificationNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: Colors.primaryContainer, borderRadius: Radius.md, padding: 14, marginBottom: 16 },
+  verificationNoticeText: { ...Typography.bodyMd, flex: 1, fontSize: 13, lineHeight: 18, color: Colors.onPrimaryContainer },
   card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.lg, borderWidth: 1, borderColor: Colors.outlineVariant, padding: 24 },
   forgot: { textAlign: 'right', color: Colors.primary, fontWeight: '700', fontSize: 13, marginBottom: 8, marginTop: -4 },
   footer: { textAlign: 'center', marginTop: 24, color: Colors.onSurfaceVariant },
