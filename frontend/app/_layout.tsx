@@ -95,7 +95,6 @@ export default function RootLayout() {
     return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator /></View>;
   }
   if (!authenticated && !inAuthGroup && !inPublicEntry) return <Redirect href="/(auth)/login" />;
-  if (authenticated && inAuthGroup) return <Redirect href="/(tabs)" />;
   if (authenticated && role && !routeAllowed) return <Redirect href="/(tabs)" />;
 
   return (
