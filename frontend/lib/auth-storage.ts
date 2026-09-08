@@ -3,6 +3,11 @@ import { Platform } from 'react-native';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
 const AUTH_TOKEN_KEY = 'auth_token';
+export const AUTH_CHANGED_EVENT = 'avicoletrack-auth-changed';
+
+const notifyAuthChanged = () => {
+	if (typeof window !== 'undefined') window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
+};
 
 const getWebToken = () => {
 	if (typeof window === 'undefined') return null;
@@ -10,11 +15,17 @@ const getWebToken = () => {
 };
 
 const setWebToken = (token: string) => {
-	if (typeof window !== 'undefined') window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+	if (typeof window !== 'undefined') {
+		window.sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+		notifyAuthChanged();
+	}
 };
 
 const clearWebToken = () => {
-	if (typeof window !== 'undefined') window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
+	if (typeof window !== 'undefined') {
+		window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
+		notifyAuthChanged();
+	}
 };
 
 export async function getAuthToken() {
@@ -52,4 +63,5 @@ export async function clearAuthToken() {
 		console.warn('[auth] SecureStore unavailable while clearing token.', error);
 	}
 	await removeItem(AUTH_TOKEN_KEY);
+	notifyAuthChanged();
 }

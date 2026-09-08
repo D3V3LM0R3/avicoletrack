@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { getAuthToken } from '@/lib/auth-storage';
+import { AUTH_CHANGED_EVENT, getAuthToken } from '@/lib/auth-storage';
 import { PreferencesProvider, usePreferences } from '@/lib/app-preferences';
 
 const ROUTE_ACCESS: Record<string, string[]> = {
@@ -43,7 +43,6 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const segments = useSegments();
-  const routeGroup = segments[0] ?? 'root';
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [role, setRole] = useState<string | null>(null);
 
@@ -81,11 +80,23 @@ export default function RootLayout() {
     };
 
     void loadAuth();
+
+    const handleAuthChanged = () => {
+      setAuthenticated(null);
+      void loadAuth();
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+    }
+
     return () => {
       cancelled = true;
       clearTimeout(timeout);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+      }
     };
-  }, [routeGroup]);
+  }, []);
 
   const inAuthGroup = segments[0] === '(auth)';
   const inPublicEntry = segments[0] === undefined;
