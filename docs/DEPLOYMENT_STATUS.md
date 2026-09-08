@@ -1,0 +1,115 @@
+# AvicoleTrack Deployment Status
+
+Updated: 2026-09-08
+
+## Hosting
+
+| Component | Provider | URL / location | Status |
+| --- | --- | --- | --- |
+| Frontend | Vercel | https://avicoletrack-gules.vercel.app | Deployed; browser behavior differs between Chrome and Opera |
+| Frontend backup/static deployment | GitHub Pages | https://d3v3lm0r3.github.io/avicoletrack/ | GitHub Actions deployment exists; project-path routing is configured |
+| Backend API | FastAPI Cloud | https://avicoletrack.fastapicloud.dev | Live and responding |
+| PostgreSQL database | Neon | Neon project connection configured through `DATABASE_URL` | Connected and serving application data |
+| Transactional email | Brevo SMTP | `smtp-relay.brevo.com:587` | Configuration currently failing authentication |
+
+## Repository Layout
+
+- Frontend: `frontend/` (Expo SDK 54, Expo Router, React Native Web)
+- Backend: `backend/` (FastAPI, SQLAlchemy, PostgreSQL)
+- Database migrations: `database/migrations/` and `backend/migrations/`
+- GitHub Pages workflow: `.github/workflows/deploy-pages.yml`
+
+## Production Configuration
+
+### Frontend
+
+The frontend is built as a static Expo web app.
+
+```text
+EXPO_PUBLIC_API_URL=https://avicoletrack.fastapicloud.dev
+EXPO_PUBLIC_INVITATION_BASE_URL=https://avicoletrack-gules.vercel.app/register-invitation
+```
+
+`EXPO_PUBLIC_*` variables are public and are embedded into the browser bundle. They must not contain secrets.
+
+For GitHub Pages builds, the workflow sets:
+
+```text
+EXPO_PUBLIC_WEB_BASE_PATH=/avicoletrack
+```
+
+Vercel must build from the `frontend` directory with no `/avicoletrack` base path.
+
+### Backend
+
+The backend uses these important environment variables:
+
+```text
+DATABASE_URL=<Neon PostgreSQL connection string>
+JWT_SECRET=<private secret>
+FRONTEND_URL=<production frontend origin>
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USERNAME=<Brevo login email>
+SMTP_PASSWORD=<Brevo SMTP key>
+SMTP_FROM_EMAIL=<verified Brevo sender>
+SMTP_USE_TLS=true
+```
+
+`FRONTEND_URL` should be the frontend origin without a trailing slash. For the current Vercel deployment:
+
+```text
+FRONTEND_URL=https://avicoletrack-gules.vercel.app
+```
+
+The backend uses `FRONTEND_URL` for CORS and for verification/password-reset links.
+
+## Verified Facts
+
+- The FastAPI health endpoint responds successfully:
+  `https://avicoletrack.fastapicloud.dev/health`
+- Neon-backed API requests have succeeded in production.
+- A successful production login returned HTTP 200 and a subsequent `/farms` request also returned HTTP 200.
+- The Expo web export completes successfully and generates 58 static routes.
+- The backend package builds successfully with explicit setuptools package configuration.
+
+## Remaining Problems
+
+### 1. Brevo SMTP authentication
+
+The backend log reports:
+
+```text
+smtplib.SMTPAuthenticationError: (535, b'5.7.8 Authentication failed')
+```
+
+Registration commits the user to Neon, then email delivery fails. The backend now logs SMTP failures instead of turning the completed registration into a server error, but verification emails cannot be delivered until the Brevo credentials are corrected.
+
+Check the FastAPI Cloud variables, especially:
+
+- `SMTP_USERNAME`: Brevo account/login email
+- `SMTP_PASSWORD`: Brevo SMTP key, not the Brevo web-login password
+- `SMTP_FROM_EMAIL`: verified sender address
+
+### 2. Frontend login/navigation behavior
+
+The frontend has experienced repeated redirects/loading behavior, especially in Chrome. The root cause investigated so far was authentication state being re-read during route changes and stale browser `sessionStorage` containing `auth_token`.
+
+A local fix has been prepared to:
+
+- avoid reloading auth state on every nested route change;
+- avoid forcing every authenticated auth screen back to the tabs route;
+- prevent a stale web session from creating an auth redirect loop;
+- show a persistent email-verification notice on the login page.
+
+The fix must be manually committed and pushed before it reaches Vercel/GitHub Pages.
+
+For local browser recovery, clear site data for the frontend origin, including `sessionStorage`, then reload.
+
+## Next Work Order
+
+1. Correct Brevo SMTP credentials and redeploy the backend.
+2. Publish the pending frontend auth/navigation fix.
+3. Register a fresh test account and confirm that the verification email arrives.
+4. Verify the email, log in, load the farms/dashboard data, and test an invitation link.
+5. Confirm the final frontend domain and keep only that domain in production CORS/email-link configuration.
