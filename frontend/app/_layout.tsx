@@ -43,7 +43,7 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const segments = useSegments();
-  const routeKey = segments.join('/');
+  const routeGroup = segments[0] ?? 'root';
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [role, setRole] = useState<string | null>(null);
 
@@ -85,7 +85,7 @@ export default function RootLayout() {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [routeKey]);
+  }, [routeGroup]);
 
   const inAuthGroup = segments[0] === '(auth)';
   const inPublicEntry = segments[0] === undefined;
