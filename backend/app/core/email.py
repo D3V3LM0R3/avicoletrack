@@ -4,10 +4,29 @@ from email.message import EmailMessage
 
 from app.core.config import settings
 
+import httpx
+
 logger = logging.getLogger(__name__)
 
 
 def send_auth_email(recipient: str, subject: str, body: str) -> None:
+    resend_api_key = settings.resend_api_key.strip() if settings.resend_api_key else None
+    resend_from_email = settings.resend_from_email.strip() if settings.resend_from_email else None
+
+    if resend_api_key and resend_from_email:
+        try:
+            response = httpx.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {resend_api_key}"},
+                json={"from": resend_from_email, "to": [recipient], "subject": subject, "text": body},
+                timeout=10,
+            )
+            response.raise_for_status()
+            return
+        except (OSError, httpx.HTTPError):
+            logger.exception("Unable to send authentication email with Resend to %s", recipient)
+            return
+
     smtp_host = settings.smtp_host.strip() if settings.smtp_host else None
     smtp_username = settings.smtp_username.strip() if settings.smtp_username else None
     smtp_password = settings.smtp_password.strip() if settings.smtp_password else None

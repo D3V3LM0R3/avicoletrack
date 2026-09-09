@@ -11,6 +11,7 @@ Updated: 2026-09-09
 | Backend API | FastAPI Cloud | https://avicoletrack.fastapicloud.dev | Live and responding |
 | PostgreSQL database | Neon | Neon project connection configured through `DATABASE_URL` | Connected and serving application data |
 | Transactional email | Brevo SMTP | `smtp-relay.brevo.com:587` | Configuration currently failing authentication |
+| Transactional email | Resend API | `https://api.resend.com/emails` | Preferred provider; requires API key and verified sender |
 
 ## Repository Layout
 
@@ -55,6 +56,8 @@ SMTP_USERNAME=<Brevo login email>
 SMTP_PASSWORD=<Brevo SMTP key>
 SMTP_FROM_EMAIL=<verified Brevo sender>
 SMTP_USE_TLS=true
+RESEND_API_KEY=<private Resend API key>
+RESEND_FROM_EMAIL=<verified Resend sender>
 ```
 
 `FRONTEND_URL` should be the frontend origin without a trailing slash. For the current Vercel deployment:
@@ -64,6 +67,8 @@ FRONTEND_URL=https://avicoletrack-gules.vercel.app
 ```
 
 The backend uses `FRONTEND_URL` for CORS and for verification/password-reset links.
+Resend is preferred when both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set;
+SMTP remains available as a fallback.
 Access tokens include a JWT expiration claim and expire after 60 minutes by default.
 Set `ACCESS_TOKEN_EXPIRE_MINUTES` in FastAPI Cloud to change the timeout, then
 redeploy the backend. Existing tokens keep their original expiration.
@@ -79,21 +84,21 @@ redeploy the backend. Existing tokens keep their original expiration.
 
 ## Remaining Problems
 
-### 1. Brevo SMTP authentication
+### 1. Transactional email provider
 
-The backend log reports:
+The previous Brevo configuration reported:
 
 ```text
 smtplib.SMTPAuthenticationError: (535, b'5.7.8 Authentication failed')
 ```
 
-Registration commits the user to Neon, then email delivery fails. The backend now logs SMTP failures instead of turning the completed registration into a server error, but verification emails cannot be delivered until the Brevo credentials are corrected.
+Resend is now the preferred provider. Registration commits the user to Neon,
+then the backend sends through Resend when its variables are configured.
 
-Check the FastAPI Cloud variables, especially:
+Configure these FastAPI Cloud variables:
 
-- `SMTP_USERNAME`: Brevo account/login email
-- `SMTP_PASSWORD`: Brevo SMTP key, not the Brevo web-login password
-- `SMTP_FROM_EMAIL`: verified sender address
+- `RESEND_API_KEY`: private Resend API key
+- `RESEND_FROM_EMAIL`: sender using a verified Resend domain
 
 ### 2. Frontend login/navigation behavior — resolved
 

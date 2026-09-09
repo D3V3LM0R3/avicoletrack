@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
+    resend_api_key: str | None = None
+    resend_from_email: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
