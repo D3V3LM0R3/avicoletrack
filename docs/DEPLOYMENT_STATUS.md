@@ -113,9 +113,18 @@ The fix now:
 
 For local browser recovery, clear site data for the frontend origin, including `sessionStorage`, then reload.
 
+### 3. Analytics graphs — pending
+
+Add visual graphs to the analytics tab for production and operational trends.
+The frontend entry point is `frontend/app/analyse/index.tsx`; the supporting
+analytics endpoints are in `backend/app/api/routes/analytics.py`. Planned graph
+areas include egg production, laying percentage, mortality, stock, and financial
+trends where the underlying data is available.
+
 ## Next Work Order
 
 1. Correct Brevo SMTP credentials and redeploy the backend.
 2. Register a fresh test account and confirm that the verification email arrives.
 3. Verify the email, log in, load the farms/dashboard data, and test an invitation link.
-4. Confirm the final frontend domain and keep only that domain in production CORS/email-link configuration.
+4. Add graphs to the analytics tab and validate them with production data.
+5. Confirm the final frontend domain and keep only that domain in production CORS/email-link configuration.
