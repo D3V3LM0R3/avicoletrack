@@ -1,12 +1,12 @@
 # AvicoleTrack Deployment Status
 
-Updated: 2026-09-08
+Updated: 2026-09-09
 
 ## Hosting
 
 | Component | Provider | URL / location | Status |
 | --- | --- | --- | --- |
-| Frontend | Vercel | https://avicoletrack-gules.vercel.app | Deployed; browser behavior differs between Chrome and Opera |
+| Frontend | Vercel | https://avicoletrack-gules.vercel.app | Deployed; login and navigation issue resolved |
 | Frontend backup/static deployment | GitHub Pages | https://d3v3lm0r3.github.io/avicoletrack/ | GitHub Actions deployment exists; project-path routing is configured |
 | Backend API | FastAPI Cloud | https://avicoletrack.fastapicloud.dev | Live and responding |
 | PostgreSQL database | Neon | Neon project connection configured through `DATABASE_URL` | Connected and serving application data |
@@ -47,6 +47,7 @@ The backend uses these important environment variables:
 ```text
 DATABASE_URL=<Neon PostgreSQL connection string>
 JWT_SECRET=<private secret>
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 FRONTEND_URL=<production frontend origin>
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
@@ -63,6 +64,9 @@ FRONTEND_URL=https://avicoletrack-gules.vercel.app
 ```
 
 The backend uses `FRONTEND_URL` for CORS and for verification/password-reset links.
+Access tokens include a JWT expiration claim and expire after 60 minutes by default.
+Set `ACCESS_TOKEN_EXPIRE_MINUTES` in FastAPI Cloud to change the timeout, then
+redeploy the backend. Existing tokens keep their original expiration.
 
 ## Verified Facts
 
@@ -91,25 +95,22 @@ Check the FastAPI Cloud variables, especially:
 - `SMTP_PASSWORD`: Brevo SMTP key, not the Brevo web-login password
 - `SMTP_FROM_EMAIL`: verified sender address
 
-### 2. Frontend login/navigation behavior
+### 2. Frontend login/navigation behavior — resolved
 
 The frontend has experienced repeated redirects/loading behavior, especially in Chrome. The root cause investigated so far was authentication state being re-read during route changes and stale browser `sessionStorage` containing `auth_token`.
 
-A local fix has been prepared to:
+The fix now:
 
 - avoid reloading auth state on every nested route change;
 - avoid forcing every authenticated auth screen back to the tabs route;
 - prevent a stale web session from creating an auth redirect loop;
 - show a persistent email-verification notice on the login page.
 
-The fix must be manually committed and pushed before it reaches Vercel/GitHub Pages.
-
 For local browser recovery, clear site data for the frontend origin, including `sessionStorage`, then reload.
 
 ## Next Work Order
 
 1. Correct Brevo SMTP credentials and redeploy the backend.
-2. Publish the pending frontend auth/navigation fix.
-3. Register a fresh test account and confirm that the verification email arrives.
-4. Verify the email, log in, load the farms/dashboard data, and test an invitation link.
-5. Confirm the final frontend domain and keep only that domain in production CORS/email-link configuration.
+2. Register a fresh test account and confirm that the verification email arrives.
+3. Verify the email, log in, load the farms/dashboard data, and test an invitation link.
+4. Confirm the final frontend domain and keep only that domain in production CORS/email-link configuration.
