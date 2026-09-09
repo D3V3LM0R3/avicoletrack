@@ -160,6 +160,12 @@ export const verifyEmail = (token: string): Promise<{ message: string }> =>
     body: JSON.stringify({ token }),
   });
 
+export const resendVerificationEmail = (email: string): Promise<{ message: string }> =>
+  request('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+
 export const updateProfile = (name: string): Promise<User> =>
   request('/auth/me', { method: 'PATCH', body: JSON.stringify({ name }) });
 

@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Radius, Spacing, Typography } from '@/constants/design-system';
 import { FormField } from '@/components/ui/FormField';
@@ -55,7 +55,11 @@ export default function LoginScreen() {
       const message = error instanceof Error ? error.message : 'Adresse e-mail ou mot de passe incorrect.';
       console.error('[auth] Login failed:', error);
       setServerError(message);
-      Alert.alert('Connexion impossible', message);
+      if (message.toLowerCase().includes('verify') || message.toLowerCase().includes('confirme')) {
+        router.replace(({ pathname: '/verify-pending', params: { email: email.trim().toLowerCase() } } as unknown) as Href);
+      } else {
+        Alert.alert('Connexion impossible', message);
+      }
       setIsLoading(false);
     }
   };

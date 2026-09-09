@@ -27,6 +27,7 @@ from app.schemas.auth import (
     MessageResponse,
     LoginResponse,
     RegisterRequest,
+    ResendVerificationRequest,
     UserResponse,
     UserUpdate,
 )
@@ -319,6 +320,24 @@ def verify_email(data: EmailVerificationRequest, db: Session = Depends(get_db)):
     user.email_verification_expires_at = None
     db.commit()
     return {"message": "Email address verified"}
+
+
+@router.post("/resend-verification", response_model=MessageResponse)
+def resend_verification(data: ResendVerificationRequest, db: Session = Depends(get_db)):
+    user = db.execute(select(User).where(User.email == data.email.lower())).scalar_one_or_none()
+    if user is None or user.email_verified:
+        return {"message": "If the account exists and needs verification, a new email has been sent."}
+
+    verification_token = generate_invitation_token()
+    user.email_verification_token_hash = hash_invitation_token(verification_token)
+    user.email_verification_expires_at = datetime.utcnow() + timedelta(hours=24)
+    db.commit()
+    send_auth_email(
+        user.email,
+        "Vérifiez votre adresse e-mail",
+        f"Ouvrez {settings.frontend_url}/verify-email?token={verification_token}",
+    )
+    return {"message": "If the account exists and needs verification, a new email has been sent."}
 
 
 @router.post("/reset-password", response_model=MessageResponse)

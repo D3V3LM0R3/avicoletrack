@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Text,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import { Colors, Radius, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { FormField } from '@/components/ui/FormField';
@@ -46,11 +46,7 @@ export default function RegisterInvitationScreen() {
     setIsLoading(true);
     try {
       await register({ name: name.trim(), email, password, invitation_token: invitationCode.trim() });
-      Alert.alert(
-        'Vérifiez votre e-mail',
-        `Un lien de confirmation a été envoyé à ${email.trim().toLowerCase()}. Confirmez votre adresse avant de vous connecter.`,
-        [{ text: 'Se connecter', onPress: () => router.replace('/(auth)/login') }],
-      );
+      router.replace(({ pathname: '/verify-pending', params: { email: email.trim().toLowerCase() } } as unknown) as Href);
       setIsLoading(false);
       return;
     } catch (error) {

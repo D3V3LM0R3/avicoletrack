@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
@@ -50,11 +50,7 @@ export default function RegisterOwnerScreen() {
     setIsLoading(true);
     try {
       await register({ name: name.trim(), email, password, enterprise_name: enterpriseName.trim() });
-      Alert.alert(
-        'Vérifiez votre e-mail',
-        `Un lien de confirmation a été envoyé à ${email.trim().toLowerCase()}. Confirmez votre adresse avant de vous connecter.`,
-        [{ text: 'Se connecter', onPress: () => router.replace('/(auth)/login') }],
-      );
+      router.replace(({ pathname: '/verify-pending', params: { email: email.trim().toLowerCase() } } as unknown) as Href);
       setIsLoading(false);
       return;
     } catch (error) {
