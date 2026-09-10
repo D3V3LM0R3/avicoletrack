@@ -289,7 +289,7 @@ def forgot_password(
         return {
             "message": "If an account exists for this email, a reset link has been generated.",
             "email": email,
-            "reset_requested": False,
+            "reset_requested": True,
         }
 
     reset_token = generate_invitation_token()

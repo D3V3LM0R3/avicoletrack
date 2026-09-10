@@ -7,7 +7,7 @@ Updated: 2026-09-09
 | Component | Provider | URL / location | Status |
 | --- | --- | --- | --- |
 | Frontend | Vercel | https://avicoletrack-gules.vercel.app | Deployed; login and navigation issue resolved |
-| Frontend backup/static deployment | GitHub Pages | https://d3v3lm0r3.github.io/avicoletrack/ | GitHub Actions deployment exists; project-path routing is configured |
+| Frontend | GitHub Pages | https://d3v3lm0r3.github.io/avicoletrack/ | Primary frontend; project-path routing is configured |
 | Backend API | FastAPI Cloud | https://avicoletrack.fastapicloud.dev | Live and responding |
 | PostgreSQL database | Neon | Neon project connection configured through `DATABASE_URL` | Connected and serving application data |
 | Transactional email | Gmail SMTP | `smtp.gmail.com:587` | Demo provider; requires a Gmail app password |
@@ -28,7 +28,7 @@ The frontend is built as a static Expo web app.
 
 ```text
 EXPO_PUBLIC_API_URL=https://avicoletrack.fastapicloud.dev
-EXPO_PUBLIC_INVITATION_BASE_URL=https://avicoletrack-gules.vercel.app/register-invitation
+EXPO_PUBLIC_INVITATION_BASE_URL=https://d3v3lm0r3.github.io/avicoletrack/register-invitation
 ```
 
 `EXPO_PUBLIC_*` variables are public and are embedded into the browser bundle. They must not contain secrets.
@@ -65,10 +65,12 @@ RESEND_FROM_EMAIL=<verified Resend sender>
 `FRONTEND_URL` should be the frontend origin without a trailing slash. For the current Vercel deployment:
 
 ```text
-FRONTEND_URL=https://avicoletrack-gules.vercel.app
+FRONTEND_URL=https://d3v3lm0r3.github.io/avicoletrack
 ```
 
 The backend uses `FRONTEND_URL` for CORS and for verification/password-reset links.
+Because GitHub Pages serves this app from `/avicoletrack`, keep that path in
+`FRONTEND_URL` or email links will open the wrong location.
 Set `EMAIL_PROVIDER=smtp` for the Gmail demo configuration below. Set it to
 `resend` for Resend, or `auto` to try Resend first and then SMTP. SMTP supports
 Gmail on port 587 with STARTTLS or port 465 with `SMTP_USE_SSL=true` and
