@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
+    smtp_use_ssl: bool = False
+    email_provider: str = "auto"
     resend_api_key: str | None = None
     resend_from_email: str | None = None
 

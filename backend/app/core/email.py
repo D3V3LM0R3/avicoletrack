@@ -10,10 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 def send_auth_email(recipient: str, subject: str, body: str) -> None:
+    provider = settings.email_provider.strip().lower()
     resend_api_key = settings.resend_api_key.strip() if settings.resend_api_key else None
     resend_from_email = settings.resend_from_email.strip() if settings.resend_from_email else None
 
-    if resend_api_key and resend_from_email:
+    if provider not in {"auto", "resend", "smtp"}:
+        logger.error("Unsupported EMAIL_PROVIDER value: %s", provider)
+        return
+
+    if provider in {"auto", "resend"} and resend_api_key and resend_from_email:
         try:
             response = httpx.post(
                 "https://api.resend.com/emails",
@@ -25,7 +30,12 @@ def send_auth_email(recipient: str, subject: str, body: str) -> None:
             return
         except (OSError, httpx.HTTPError):
             logger.exception("Unable to send authentication email with Resend to %s", recipient)
-            return
+            if provider == "resend":
+                return
+
+    if provider == "resend":
+        logger.error("Resend selected but RESEND_API_KEY or RESEND_FROM_EMAIL is missing")
+        return
 
     smtp_host = settings.smtp_host.strip() if settings.smtp_host else None
     smtp_username = settings.smtp_username.strip() if settings.smtp_username else None
@@ -33,6 +43,7 @@ def send_auth_email(recipient: str, subject: str, body: str) -> None:
     smtp_from_email = settings.smtp_from_email.strip() if settings.smtp_from_email else None
 
     if not all((smtp_host, smtp_username, smtp_password, smtp_from_email)):
+        logger.error("SMTP selected but SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD, or SMTP_FROM_EMAIL is missing")
         return
 
     message = EmailMessage()
@@ -42,10 +53,17 @@ def send_auth_email(recipient: str, subject: str, body: str) -> None:
     message.set_content(body)
 
     try:
-        with smtplib.SMTP(smtp_host, settings.smtp_port, timeout=10) as server:
-            if settings.smtp_use_tls:
+        smtp_client = smtplib.SMTP_SSL if settings.smtp_use_ssl else smtplib.SMTP
+        with smtp_client(smtp_host, settings.smtp_port, timeout=10) as server:
+            if settings.smtp_use_tls and not settings.smtp_use_ssl:
                 server.starttls()
             server.login(smtp_username, smtp_password)
             server.send_message(message)
+    except smtplib.SMTPAuthenticationError:
+        logger.exception(
+            "SMTP authentication failed for host %s and username %s; verify the Gmail app password and account",
+            smtp_host,
+            smtp_username,
+        )
     except (OSError, smtplib.SMTPException):
-        logger.exception("Unable to send authentication email to %s", recipient)
+        logger.exception("Unable to send authentication email through SMTP host %s", smtp_host)

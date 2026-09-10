@@ -10,7 +10,7 @@ Updated: 2026-09-09
 | Frontend backup/static deployment | GitHub Pages | https://d3v3lm0r3.github.io/avicoletrack/ | GitHub Actions deployment exists; project-path routing is configured |
 | Backend API | FastAPI Cloud | https://avicoletrack.fastapicloud.dev | Live and responding |
 | PostgreSQL database | Neon | Neon project connection configured through `DATABASE_URL` | Connected and serving application data |
-| Transactional email | Brevo SMTP | `smtp-relay.brevo.com:587` | Configuration currently failing authentication |
+| Transactional email | Gmail SMTP | `smtp.gmail.com:587` | Demo provider; requires a Gmail app password |
 | Transactional email | Resend API | `https://api.resend.com/emails` | Preferred provider; requires API key and verified sender |
 
 ## Repository Layout
@@ -56,6 +56,8 @@ SMTP_USERNAME=<Brevo login email>
 SMTP_PASSWORD=<Brevo SMTP key>
 SMTP_FROM_EMAIL=<verified Brevo sender>
 SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+EMAIL_PROVIDER=smtp
 RESEND_API_KEY=<private Resend API key>
 RESEND_FROM_EMAIL=<verified Resend sender>
 ```
@@ -67,8 +69,10 @@ FRONTEND_URL=https://avicoletrack-gules.vercel.app
 ```
 
 The backend uses `FRONTEND_URL` for CORS and for verification/password-reset links.
-Resend is preferred when both `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set;
-SMTP remains available as a fallback.
+Set `EMAIL_PROVIDER=smtp` for the Gmail demo configuration below. Set it to
+`resend` for Resend, or `auto` to try Resend first and then SMTP. SMTP supports
+Gmail on port 587 with STARTTLS or port 465 with `SMTP_USE_SSL=true` and
+`SMTP_USE_TLS=false`.
 Access tokens include a JWT expiration claim and expire after 60 minutes by default.
 Set `ACCESS_TOKEN_EXPIRE_MINUTES` in FastAPI Cloud to change the timeout, then
 redeploy the backend. Existing tokens keep their original expiration.
@@ -86,14 +90,46 @@ redeploy the backend. Existing tokens keep their original expiration.
 
 ### 1. Transactional email provider
 
+For a buyer demonstration, Gmail can send verification and password-reset
+messages without a custom domain. The Gmail account must have 2-Step
+Verification enabled and use a 16-character Google App Password. Use the full
+Gmail address for both `SMTP_USERNAME` and `SMTP_FROM_EMAIL`; do not use the
+normal Gmail password.
+
+FastAPI Cloud variables:
+
+```text
+EMAIL_PROVIDER=smtp
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-account@gmail.com
+SMTP_PASSWORD=<Google App Password, without spaces>
+SMTP_FROM_EMAIL=your-account@gmail.com
+SMTP_USE_TLS=true
+SMTP_USE_SSL=false
+```
+
+If port 587 is unavailable in the deployment environment, use Gmail's SSL
+endpoint instead:
+
+```text
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USE_TLS=false
+SMTP_USE_SSL=true
+```
+
+Never commit or paste the app password into source control, logs, or support
+messages. Rotate any credential that has already been exposed.
+
 The previous Brevo configuration reported:
 
 ```text
 smtplib.SMTPAuthenticationError: (535, b'5.7.8 Authentication failed')
 ```
 
-Resend is now the preferred provider. Registration commits the user to Neon,
-then the backend sends through Resend when its variables are configured.
+Resend remains available for a custom-domain production setup. Registration
+commits the user to Neon, then the backend sends through the configured provider.
 
 Configure these FastAPI Cloud variables:
 
@@ -123,7 +159,7 @@ trends where the underlying data is available.
 
 ## Next Work Order
 
-1. Correct Brevo SMTP credentials and redeploy the backend.
+1. Configure Gmail SMTP variables in FastAPI Cloud and redeploy the backend.
 2. Register a fresh test account and confirm that the verification email arrives.
 3. Verify the email, log in, load the farms/dashboard data, and test an invitation link.
 4. Add graphs to the analytics tab and validate them with production data.
