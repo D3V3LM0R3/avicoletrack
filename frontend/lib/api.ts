@@ -382,6 +382,35 @@ export const getDashboard = (period: 'today' | '7d' | '30d' | 'custom' = 'today'
 export const compareFarms = (farmIds: number[]): Promise<FarmComparison[]> =>
   request(`/analytics/farm-comparison?${farmIds.map((id) => `farm_ids=${id}`).join('&')}`);
 
+export type FarmOverview = {
+  farm: { id: number; name: string; location: string | null; active: boolean };
+  period: '7d' | '30d' | '90d' | 'year' | 'all';
+  period_start: string | null;
+  period_end: string;
+  stock: {
+    food_quantity: number;
+    food_unit: string;
+    food_type: string | null;
+    eggs: number;
+    alveoli: number;
+    cartons: number;
+  };
+  results: {
+    production: number;
+    mortality: number;
+    average_laying_percentage: number | null;
+    report_count: number;
+  };
+  highlights: {
+    best_production_month: { month: string; production: number } | null;
+    highest_mortality_month: { month: string; mortality: number } | null;
+  };
+  activity: { label: string; production: number; mortality: number }[];
+};
+
+export const getFarmOverview = (farmId: number, period: FarmOverview['period'] = '30d'): Promise<FarmOverview> =>
+  request(`/analytics/farms/${farmId}/overview?period=${period}`);
+
 export const createEvent = (data: {
   farm_ids: number[];
   flock_id?: number | null;

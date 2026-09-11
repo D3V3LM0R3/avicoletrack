@@ -71,7 +71,7 @@ export default function MenuScreen() {
         { icon: 'swap-horiz', label: 'Mouvements de stock', href: '/mouvements' },
         ...(role === 'OWNER'
           ? ([
-              { icon: 'business', label: 'Fermes', href: '/fermes' },
+              { icon: 'business', label: 'Fermes & résultats', href: '/fermes' },
               { icon: 'badge', label: 'Personnel', href: '/personnel' },
             ] as MenuItem[])
           : []),

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { FormField } from '@/components/ui/FormField';
@@ -22,7 +22,6 @@ export default function FermesScreen() {
   const [location, setLocation] = useState('');
   const [nameError, setNameError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [selectedFarm, setSelectedFarm] = useState<Farm | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
@@ -119,7 +118,7 @@ export default function FermesScreen() {
             <Text style={styles.loadingText}>Chargement des fermes…</Text>
           </View>
         ) : farms.map((f) => (
-          <TouchableOpacity key={f.id} style={styles.card} activeOpacity={0.85} onPress={() => setSelectedFarm(f)}>
+          <TouchableOpacity key={f.id} style={styles.card} activeOpacity={0.85} onPress={() => router.push(`/fermes/${f.id}` as Href)}>
             <View style={styles.cardHeader}>
               <View style={styles.farmIcon}>
                 <MaterialIcons name="business" size={22} color={Colors.primary} />
@@ -150,22 +149,6 @@ export default function FermesScreen() {
 
         <PrimaryButton label="Nouvelle ferme" icon="add-business" onPress={() => setShowCreate(true)} />
       </ScrollView>
-
-      <Modal transparent animationType="slide" visible={!!selectedFarm} onRequestClose={() => setSelectedFarm(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedFarm?.name}</Text>
-              <TouchableOpacity onPress={() => setSelectedFarm(null)} hitSlop={10}><MaterialIcons name="close" size={22} color={Colors.onSurfaceVariant} /></TouchableOpacity>
-            </View>
-            <Text style={styles.summaryLine}>Membres actifs : {selectedFarm?.members ?? 0}</Text>
-            <Text style={styles.summaryLine}>Bandes : {selectedFarm?.flocks ?? 0}</Text>
-            <Text style={styles.summaryLine}>Rapports enregistrés : {(selectedFarm as Farm & { reports?: number })?.reports ?? 0}</Text>
-            <Text style={styles.summaryHint}>Les données de production et de stock sont disponibles dans les rapports de la ferme.</Text>
-            <PrimaryButton label="Fermer" onPress={() => setSelectedFarm(null)} />
-          </View>
-        </View>
-      </Modal>
 
       <Modal transparent animationType="slide" visible={showCreate} onRequestClose={() => setShowCreate(false)}>
         <View style={styles.modalOverlay}>

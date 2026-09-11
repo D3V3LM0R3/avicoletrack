@@ -110,6 +110,96 @@ def dashboard(period: str = Query("today", pattern="^(today|7d|30d|custom)$"), s
     }
 
 
+@router.get("/farms/{farm_id}/overview")
+def farm_overview(
+    farm_id: int,
+    period: str = Query("30d", pattern="^(7d|30d|90d|year|all)$"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return current farm stock and period-based production activity."""
+    farm = db.get(Farm, farm_id)
+    if farm is None:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    require_farm_access(current_user, farm_id, db)
+
+    end_date = date.today()
+    start_date = None
+    if period == "7d":
+        start_date = end_date - timedelta(days=6)
+    elif period == "30d":
+        start_date = end_date - timedelta(days=29)
+    elif period == "90d":
+        start_date = end_date - timedelta(days=89)
+    elif period == "year":
+        start_date = date(end_date.year, 1, 1)
+
+    reports_query = select(DailyReport).where(DailyReport.farm_id == farm_id)
+    if start_date is not None:
+        reports_query = reports_query.where(DailyReport.report_date >= start_date)
+    reports = db.execute(reports_query.order_by(DailyReport.report_date, DailyReport.id)).scalars().all()
+
+    production = sum(report.eggs_produced or 0 for report in reports)
+    mortality = sum(report.mortality or 0 for report in reports)
+    laying_values = [report.laying_percentage for report in reports if report.laying_percentage is not None]
+    average_laying = sum(laying_values) / len(laying_values) if laying_values else None
+
+    monthly: dict[str, dict[str, float | int]] = {}
+    for report in reports:
+        month_key = report.report_date.strftime("%Y-%m")
+        bucket = monthly.setdefault(month_key, {"production": 0, "mortality": 0})
+        bucket["production"] += report.eggs_produced or 0
+        bucket["mortality"] += report.mortality or 0
+
+    best_production = max(monthly.items(), key=lambda item: item[1]["production"], default=None)
+    highest_mortality = max(monthly.items(), key=lambda item: item[1]["mortality"], default=None)
+    monthly_activity = [
+        {
+            "label": month,
+            "production": values["production"],
+            "mortality": values["mortality"],
+        }
+        for month, values in sorted(monthly.items())
+    ]
+
+    return {
+        "farm": {
+            "id": farm.id,
+            "name": farm.name,
+            "location": farm.location,
+            "active": farm.active,
+        },
+        "period": period,
+        "period_start": start_date.isoformat() if start_date else None,
+        "period_end": end_date.isoformat(),
+        "stock": {
+            "food_quantity": float(farm.food_quantity or 0),
+            "food_unit": farm.food_unit,
+            "food_type": farm.food_type,
+            "eggs": farm.egg_stock or 0,
+            "alveoli": farm.alveoli or 0,
+            "cartons": farm.cartons or 0,
+        },
+        "results": {
+            "production": production,
+            "mortality": mortality,
+            "average_laying_percentage": average_laying,
+            "report_count": len(reports),
+        },
+        "highlights": {
+            "best_production_month": {
+                "month": best_production[0],
+                "production": best_production[1]["production"],
+            } if best_production else None,
+            "highest_mortality_month": {
+                "month": highest_mortality[0],
+                "mortality": highest_mortality[1]["mortality"],
+            } if highest_mortality else None,
+        },
+        "activity": monthly_activity,
+    }
+
+
 def _latest_reports_by_flock(reports: list[DailyReport]) -> list[DailyReport]:
     latest: dict[tuple[int, int], DailyReport] = {}
     for report in reports:
