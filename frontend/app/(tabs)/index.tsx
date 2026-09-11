@@ -11,6 +11,7 @@ import { formatEggStock, formatStockDisplay, getDashboard, getEggStockBreakdown,
 import { useI18n } from '@/lib/i18n';
 import { getItem } from '@/lib/storage';
 import { usePreferences } from '@/lib/app-preferences';
+import { loadNotificationPreferences, notificationPreferenceEnabled, type NotificationPreferences } from '@/lib/notification-preferences';
 
 // Fonction utilitaire pour formater les nombres en français (ex: 4520 -> "4 520")
 const formatNumber = (num: number | string): string => {
@@ -129,6 +130,7 @@ export default function DashboardScreen() {
   const [flocks, setFlocks] = useState<Flock[]>([]);
   const [detailMetric, setDetailMetric] = useState<'hens' | 'eggs' | 'mortality' | 'stock' | 'food' | null>(null);
   const [canCreateEvent, setCanCreateEvent] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>({ critical: true, stock: true, production: false });
 
   const selectedFarm = farms.find((farm) => farm.id === selectedFarmId) ?? farms[0] ?? null;
   const selectedFarmStats = summary?.farms_detail.find((farm) => farm.farm_id === selectedFarm?.id) ?? null;
@@ -154,6 +156,7 @@ export default function DashboardScreen() {
       getItem('user_data').then((raw) => { if (raw) setRole(JSON.parse(raw).role || 'OWNER'); }),
       getDashboard(periodKey, customStart?.toISOString().slice(0, 10), customEnd?.toISOString().slice(0, 10)).then(setSummary),
       listNotifications().then(setNotifications),
+      loadNotificationPreferences().then(setNotificationPreferences),
       listFarms().then((items) => {
         setFarms(items);
         setSelectedFarmId((previous) => previous ?? items[0]?.id ?? null);
@@ -391,7 +394,7 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
 
-          {notifications.filter((item) => !item.read_at).slice(0, 3).map((item) => (
+          {notifications.filter((item) => !item.read_at && notificationPreferenceEnabled(item, notificationPreferences)).slice(0, 3).map((item) => (
             <View key={item.id} style={styles.alertItem}>
               <MaterialIcons name="notifications" size={20} color={Colors.warning} style={{ marginTop: 2 }} />
               <View style={{ flex: 1 }}>

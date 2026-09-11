@@ -7,6 +7,7 @@ import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-
 import { ScreenShell } from '@/components/ui/ScreenShell';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { listNotifications, markNotificationRead, type Notification } from '@/lib/api';
+import { loadNotificationPreferences, notificationPreferenceEnabled, type NotificationPreferences } from '@/lib/notification-preferences';
 
 /* ================= TYPES & DONNÉES ================= */
 
@@ -49,15 +50,16 @@ export default function AlertesScreen() {
   const [processedIds, setProcessedIds] = useState<number[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>({ critical: true, stock: true, production: false });
 
   useEffect(() => {
-    listNotifications()
-      .then(setNotifications)
+    Promise.all([listNotifications(), loadNotificationPreferences()])
+      .then(([items, preferences]) => { setNotifications(items); setNotificationPreferences(preferences); })
       .catch(() => setNotifications([]))
       .finally(() => setIsLoading(false));
   }, []);
 
-  const liveAlerts: AlertItem[] = notifications.filter((notification) => !notification.read_at).map((notification) => ({
+  const liveAlerts: AlertItem[] = notifications.filter((notification) => !notification.read_at && notificationPreferenceEnabled(notification, notificationPreferences)).map((notification) => ({
     id: notification.id,
     type: notification.title.toLowerCase().includes('stock') ? 'stock' : notification.title.toLowerCase().includes('mortalité') ? 'mortalite' : 'production',
     severity: 'attention',

@@ -81,6 +81,10 @@ async function request(path: string, init: RequestInit = {}) {
   const isCacheable = (init.method || 'GET').toUpperCase() === 'GET';
 
   try {
+    if (isCacheable && (await getItem('pref_lowdata')) === '1') {
+      const cached = await readCached(path);
+      if (cached !== null) return cached;
+    }
     const body = await parseResponse(await fetch(`${API_URL}${path}`, { ...init, headers }));
     if (isCacheable) void writeCached(path, body);
     return body;

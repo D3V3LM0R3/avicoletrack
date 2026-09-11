@@ -38,6 +38,7 @@ export default function ParametresScreen() {
   const [newName, setNewName] = useState('');
   const [showLogout, setShowLogout] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [legalPage, setLegalPage] = useState<'terms' | 'privacy' | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -235,7 +236,7 @@ export default function ParametresScreen() {
         {/* SÉCURITÉ */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sécurité</Text>
-          <TouchableOpacity style={styles.helpRow} onPress={() => Alert.alert('Mot de passe', 'Le changement de mot de passe sera disponible avec le backend (endpoint dédié).')}>
+          <TouchableOpacity style={styles.helpRow} onPress={() => router.push('/(auth)/forgot-password')}>
             <View style={styles.helpRowLeft}>
               <MaterialIcons name="key" size={20} color={Colors.outline} />
               <Text style={styles.helpText}>Changer le mot de passe</Text>
@@ -270,11 +271,11 @@ export default function ParametresScreen() {
             <Text style={styles.helpText}>Version</Text>
             <Text style={styles.helpText}>1.0.0 (beta)</Text>
           </View>
-          <TouchableOpacity style={styles.aboutRow} onPress={() => Alert.alert('Conditions d\'utilisation', 'Document complet disponible sur avicoletrack.cm/cgu.')}>
+          <TouchableOpacity style={styles.aboutRow} onPress={() => setLegalPage('terms')}>
             <Text style={styles.helpText}>Conditions d&apos;utilisation</Text>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.aboutRow} onPress={() => Alert.alert('Confidentialité', 'Vos données sont chiffrées et hébergées conformément à la politique de confidentialité.')}>
+          <TouchableOpacity style={styles.aboutRow} onPress={() => setLegalPage('privacy')}>
             <Text style={styles.helpText}>Politique de confidentialité</Text>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
@@ -318,6 +319,35 @@ export default function ParametresScreen() {
             <Text style={styles.faqA}>L&apos;application convertit automatiquement : 30 œufs = 1 alvéole, 360 œufs = 1 carton.</Text>
             <Text style={styles.faqQ}>Qui peut voir mes données financières ?</Text>
             <Text style={styles.faqA}>Uniquement le propriétaire et les gestionnaires autorisés de votre ferme.</Text>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent animationType="slide" visible={legalPage !== null} onRequestClose={() => setLegalPage(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{legalPage === 'terms' ? "Conditions d'utilisation" : 'Politique de confidentialité'}</Text>
+              <TouchableOpacity onPress={() => setLegalPage(null)} hitSlop={10}>
+                <MaterialIcons name="close" size={22} color={Colors.onSurfaceVariant} />
+              </TouchableOpacity>
+            </View>
+            {legalPage === 'terms' ? (
+              <>
+                <Text style={styles.faqQ}>Utilisation du service</Text>
+                <Text style={styles.faqA}>AvicoleTrack aide les entreprises avicoles à suivre leurs fermes, productions, stocks et équipes. Les informations saisies doivent rester exactes et respecter les droits d&apos;accès de votre entreprise.</Text>
+                <Text style={styles.faqQ}>Responsabilité</Text>
+                <Text style={styles.faqA}>Les indicateurs sont des outils d&apos;aide à la décision. Vérifiez les données avant toute décision opérationnelle ou financière.</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.faqQ}>Vos données</Text>
+                <Text style={styles.faqA}>Les données de ferme sont accessibles selon votre rôle et vos appartenances. Les données hors ligne restent stockées localement jusqu&apos;à leur synchronisation.</Text>
+                <Text style={styles.faqQ}>Sécurité</Text>
+                <Text style={styles.faqA}>Ne partagez jamais votre mot de passe ou vos codes de récupération. Contactez le support pour toute demande concernant votre compte.</Text>
+              </>
+            )}
+            <PrimaryButton label="Fermer" onPress={() => setLegalPage(null)} />
           </View>
         </View>
       </Modal>
