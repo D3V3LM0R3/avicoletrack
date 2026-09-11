@@ -363,7 +363,9 @@ def owner_profit_trends(
                 .order_by(MarketPrice.price_date.desc())
                 .limit(1)
             ).scalars().first()
-            monthly_data[month_key]["revenue"] += Decimal(movement.quantity) * (price.price if price else Decimal(1.5))
+            quantity = Decimal(str(movement.quantity or 0))
+            unit_price = Decimal(str(price.price)) if price else Decimal("1.5")
+            monthly_data[month_key]["revenue"] += quantity * unit_price
 
         elif movement.movement_type == "Entrée":
             if "aliment" in stock_type:
@@ -373,7 +375,9 @@ def owner_profit_trends(
                     .order_by(MarketPrice.price_date.desc())
                     .limit(1)
                 ).scalars().first()
-                monthly_data[month_key]["cost"] += Decimal(movement.quantity) * (price.price if price else Decimal(50))
+                quantity = Decimal(str(movement.quantity or 0))
+                unit_price = Decimal(str(price.price)) if price else Decimal("50")
+                monthly_data[month_key]["cost"] += quantity * unit_price
             elif "volaille" in stock_type:
                 price = db.execute(
                     select(MarketPrice)
@@ -381,7 +385,9 @@ def owner_profit_trends(
                     .order_by(MarketPrice.price_date.desc())
                     .limit(1)
                 ).scalars().first()
-                monthly_data[month_key]["cost"] += Decimal(movement.quantity) * (price.price if price else Decimal(100))
+                quantity = Decimal(str(movement.quantity or 0))
+                unit_price = Decimal(str(price.price)) if price else Decimal("100")
+                monthly_data[month_key]["cost"] += quantity * unit_price
 
     trends = [
         {
