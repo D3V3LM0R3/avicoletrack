@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -14,8 +14,16 @@ export default function VerifyPendingScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const resend = async () => {
+    if (cooldown > 0) return;
     if (!email.trim()) {
       setError("L'adresse e-mail est obligatoire.");
       return;
@@ -25,6 +33,7 @@ export default function VerifyPendingScreen() {
     setMessage('');
     try {
       await resendVerificationEmail(email);
+      setCooldown(60);
       setMessage('Si ce compte existe et doit être vérifié, un nouveau lien a été envoyé. Consultez aussi vos courriers indésirables.');
     } catch (resendError) {
       setError(resendError instanceof Error ? resendError.message : "Impossible d'envoyer l'e-mail.");
@@ -57,11 +66,11 @@ export default function VerifyPendingScreen() {
           />
           {message && <Text style={styles.success}>{message}</Text>}
           <PrimaryButton
-            label={isLoading ? 'Envoi en cours...' : "Renvoyer l'e-mail"}
+            label={isLoading ? 'Envoi en cours...' : cooldown > 0 ? `Renvoyer dans ${cooldown}s` : "Renvoyer l'e-mail"}
             icon={isLoading ? undefined : 'send'}
             onPress={resend}
             loading={isLoading}
-            disabled={isLoading}
+            disabled={isLoading || cooldown > 0}
           />
         </View>
 

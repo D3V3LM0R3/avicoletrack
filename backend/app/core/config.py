@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     # Access tokens expire after one hour by default; production can override this.
     access_token_expire_minutes: int = 60
+    verification_resend_cooldown_seconds: int = 60
     market_price_url: str | None = None
     smtp_host: str | None = None
     smtp_port: int = 587

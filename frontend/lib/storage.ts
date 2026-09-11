@@ -5,6 +5,7 @@ let asyncStorage: {
 } | null = null;
 
 try {
+  // AsyncStorage is optional in web/static environments.
   asyncStorage = require('@react-native-async-storage/async-storage').default;
 } catch {
   asyncStorage = null;

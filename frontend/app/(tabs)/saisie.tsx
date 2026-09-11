@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   ScrollView,
@@ -310,6 +311,7 @@ export default function SaisieScreen() {
       ) : (
       <Modal visible transparent animationType="slide" onRequestClose={() => setShowCreate(false)}>
         <View style={styles.createModal}><View style={styles.createModalHeader}><Text style={styles.modalTitle}>{editingReport ? 'Modifier la saisie' : 'Créer une saisie'}</Text><TouchableOpacity onPress={() => { setShowCreate(false); setEditingReport(null); }}><MaterialIcons name="close" size={24} color={Colors.onSurfaceVariant} /></TouchableOpacity></View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Bannière hors-ligne : uniquement si vraiment hors ligne */}
       {!isOnline && (
         <View style={styles.offlineBanner}>
@@ -498,6 +500,8 @@ export default function SaisieScreen() {
           disabled={isSaving}
         />
       </View>
+
+      </KeyboardAvoidingView>
 
       {/* ---------- MODAL DOUBLON ---------- */}
       <Modal transparent animationType="fade" visible={duplicateModal}>

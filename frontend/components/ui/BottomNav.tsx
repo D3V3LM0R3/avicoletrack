@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Colors } from '@/constants/design-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFarmPermissionState, listFarms, listNotifications } from '@/lib/api';
+import { listNotifications } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 
 export type NavItem = {
@@ -18,11 +18,9 @@ export type NavItem = {
 const DEFAULT_ITEMS: NavItem[] = [
   { key: 'index', label: 'Accueil', icon: 'home' },
   { key: 'saisie', label: 'Saisie', icon: 'edit-note' },
-  { key: 'mouvements', label: 'Mouvements', icon: 'swap-horiz' },
   { key: 'alertes', label: 'Alertes', icon: 'notifications', badge: true },
   { key: 'rapports', label: 'Rapports', icon: 'assessment' },
   { key: 'capital', label: 'Capital', icon: 'trending-up' },
-  { key: 'chat', label: 'Messages', icon: 'chat' },
   { key: 'menu', label: 'Menu', icon: 'menu' },
 ];
 
@@ -35,7 +33,6 @@ export function BottomNav({ activeKey, onPress }: Props) {
   const insets = useSafeAreaInsets();
   const [role, setRole] = useState('OWNER');
   const [hasAlert, setHasAlert] = useState(false);
-  const [canConfirmMovements, setCanConfirmMovements] = useState(false);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -44,11 +41,6 @@ export function BottomNav({ activeKey, onPress }: Props) {
         if (!raw) return;
         const nextRole = JSON.parse(raw).role || 'OWNER';
         setRole(nextRole);
-        if (nextRole === 'WORKER') {
-          const farms = await listFarms();
-          const permissions = await Promise.all(farms.map((farm) => getFarmPermissionState(farm.id)));
-          setCanConfirmMovements(permissions.some((permission) => permission.confirm_stock_movement));
-        }
       })
       .catch(() => {});
   }, []);
@@ -64,19 +56,15 @@ export function BottomNav({ activeKey, onPress }: Props) {
   const translated = {
     index: t('home'),
     saisie: t('entry'),
-    mouvements: t('movements'),
     alertes: t('alerts'),
     rapports: t('reports'),
     capital: 'Capital',
-    chat: 'Messages',
-    games: 'Jeux',
     menu: t('menu'),
   };
   const items = DEFAULT_ITEMS
     .filter((item) => {
       if (item.key === 'capital' && role !== 'OWNER') return false;
       if (item.key === 'saisie' && role !== 'WORKER') return false;
-      if (item.key === 'mouvements' && role === 'WORKER' && !canConfirmMovements) return false;
       return true;
     })
     .map((item) => ({

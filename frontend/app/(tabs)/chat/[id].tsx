@@ -54,9 +54,9 @@ export default function ChatDetailScreen() {
 
   const scrollViewRef = useRef<FlatList>(null);
 
-  const loadConversation = useCallback(async () => {
+  const loadConversation = useCallback(async (showLoadingIndicator = false) => {
     try {
-      setLoading(true);
+      if (showLoadingIndicator) setLoading(true);
       setError(null);
 
       const userData = await getItem('user_data');
@@ -76,7 +76,7 @@ export default function ChatDetailScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadConversation();
+      loadConversation(true);
       const interval = setInterval(loadConversation, 5000);
       return () => clearInterval(interval);
     }, [loadConversation])

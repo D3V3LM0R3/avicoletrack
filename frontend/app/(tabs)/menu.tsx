@@ -68,6 +68,7 @@ export default function MenuScreen() {
       items: [
         { icon: 'flutter-dash', label: 'Bandes', href: '/bandes' },
         { icon: 'inventory', label: 'Stocks & Inventaire', href: '/stocks' },
+        { icon: 'swap-horiz', label: 'Mouvements de stock', href: '/mouvements' },
         ...(role === 'OWNER'
           ? ([
               { icon: 'business', label: 'Fermes', href: '/fermes' },
@@ -89,6 +90,10 @@ export default function MenuScreen() {
           },
         ]
       : []),
+    {
+      title: 'Communication',
+      items: [{ icon: 'chat', label: 'Messages', href: '/chat' }],
+    },
     {
       title: 'Divertissement',
       items: [{ icon: 'sports-esports', label: 'Mini-jeux', href: '/games' }],

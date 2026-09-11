@@ -38,6 +38,8 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+VERIFICATION_TOKEN_LIFETIME = timedelta(hours=24)
+
 
 @router.post(
     "/register",
@@ -132,7 +134,7 @@ def register(
             updated_at=now,
             email_verified=False,
             email_verification_token_hash=hash_invitation_token(verification_token),
-            email_verification_expires_at=now + timedelta(hours=24),
+            email_verification_expires_at=now + VERIFICATION_TOKEN_LIFETIME,
         )
 
         db.add(user)
@@ -183,7 +185,7 @@ def register(
         updated_at=now,
         email_verified=False,
         email_verification_token_hash=hash_invitation_token(verification_token),
-        email_verification_expires_at=now + timedelta(hours=24),
+        email_verification_expires_at=now + VERIFICATION_TOKEN_LIFETIME,
     )
 
     db.add(user)
@@ -328,9 +330,21 @@ def resend_verification(data: ResendVerificationRequest, db: Session = Depends(g
     if user is None or user.email_verified:
         return {"message": "If the account exists and needs verification, a new email has been sent."}
 
+    now = datetime.utcnow()
+    if user.email_verification_expires_at is not None:
+        sent_at = user.email_verification_expires_at - VERIFICATION_TOKEN_LIFETIME
+        retry_at = sent_at + timedelta(seconds=settings.verification_resend_cooldown_seconds)
+        if retry_at > now:
+            remaining = max(1, int((retry_at - now).total_seconds()) + 1)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Please wait {remaining} seconds before requesting another verification email.",
+                headers={"Retry-After": str(remaining)},
+            )
+
     verification_token = generate_invitation_token()
     user.email_verification_token_hash = hash_invitation_token(verification_token)
-    user.email_verification_expires_at = datetime.utcnow() + timedelta(hours=24)
+    user.email_verification_expires_at = now + VERIFICATION_TOKEN_LIFETIME
     db.commit()
     send_auth_email(
         user.email,

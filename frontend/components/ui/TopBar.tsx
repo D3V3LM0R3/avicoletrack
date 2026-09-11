@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Typography } from '@/constants/design-system';
 import { listFarms } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
@@ -17,10 +18,11 @@ export function TopBar({
   onSyncPress,
 }: Props) {
   const [activeFarm, setActiveFarm] = useState('Aucune ferme active');
+  const insets = useSafeAreaInsets();
   const { t } = useI18n();
   useEffect(() => { if (!farmName) listFarms().then((farms) => setActiveFarm(farms[0]?.name || t('activeFarm'))).catch(() => {}); }, [farmName, t]);
   return (
-    <View style={[styles.container, { backgroundColor: Colors.surface, borderBottomColor: Colors.outlineVariant }]}>
+    <View style={[styles.container, { backgroundColor: Colors.surface, borderBottomColor: Colors.outlineVariant, paddingTop: insets.top }]}>
       <View style={styles.brand}>
         <MaterialIcons name="agriculture" size={22} color={Colors.primary} />
         <Text style={styles.brandText}>AvicoleTrack</Text>
@@ -55,7 +57,7 @@ export function TopBar({
 
 const styles = StyleSheet.create({
   container: {
-    height: Spacing.touchTargetMin,
+    minHeight: Spacing.touchTargetMin,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: Colors.outlineVariant,

@@ -49,15 +49,16 @@ The backend uses these important environment variables:
 DATABASE_URL=<Neon PostgreSQL connection string>
 JWT_SECRET=<private secret>
 ACCESS_TOKEN_EXPIRE_MINUTES=60
+VERIFICATION_RESEND_COOLDOWN_SECONDS=60
 FRONTEND_URL=<production frontend origin>
-SMTP_HOST=smtp-relay.brevo.com
+EMAIL_PROVIDER=smtp
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USERNAME=<Brevo login email>
-SMTP_PASSWORD=<Brevo SMTP key>
-SMTP_FROM_EMAIL=<verified Brevo sender>
+SMTP_USERNAME=<Gmail address>
+SMTP_PASSWORD=<Google App Password>
+SMTP_FROM_EMAIL=<same Gmail address>
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
-EMAIL_PROVIDER=smtp
 RESEND_API_KEY=<private Resend API key>
 RESEND_FROM_EMAIL=<verified Resend sender>
 ```
