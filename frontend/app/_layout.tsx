@@ -124,7 +124,7 @@ function AppNavigation() {
       value={theme === 'dark' ? DarkTheme : DefaultTheme}
       >
       <OfflineQueueReplayer />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack key={theme} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="bandes/index" />

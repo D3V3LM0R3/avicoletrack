@@ -13,6 +13,7 @@ import { updateProfile } from '@/lib/api';
 import { flushOfflineQueue, LAST_SYNC_KEY } from '@/lib/offline-sync';
 import { usePreferences, type StockDisplay } from '@/lib/app-preferences';
 import { getItem, removeItem, setItem } from '@/lib/storage';
+import { useI18n } from '@/lib/i18n';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const formatDateTime = (ts: number) => {
@@ -21,6 +22,7 @@ const formatDateTime = (ts: number) => {
 };
 
 export default function ParametresScreen() {
+  const { t } = useI18n();
   const { language: activeLanguage, theme: activeTheme, stockDisplay, setLanguage, setTheme: setAppTheme, setStockDisplay } = usePreferences();
   const [userName, setUserName] = useState('Utilisateur');
   const [userEmail, setUserEmail] = useState('');
@@ -88,7 +90,7 @@ export default function ParametresScreen() {
   /* ----- Synchronisation rapide ----- */
   const handleSyncNow = async () => {
     if (!isOnline) {
-      Alert.alert('Hors ligne', 'Une connexion est requise. Vos données restent en sécurité sur cet appareil.');
+      Alert.alert(t('offline'), t('syncRequired'));
       return;
     }
     setSyncing(true);
@@ -115,9 +117,9 @@ export default function ParametresScreen() {
       await setItem('user_data', JSON.stringify(user));
       setUserName(user.name);
       setShowEdit(false);
-      Alert.alert('Succès', 'Profil mis à jour.');
+      Alert.alert(t('save'), t('profileUpdated'));
     } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Impossible de mettre à jour le profil.');
+      Alert.alert(t('error.loading_data'), error instanceof Error ? error.message : t('updateProfileError'));
     }
   };
 
@@ -143,11 +145,11 @@ export default function ParametresScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Paramètres" onBack={() => router.back()} />
+      <SubScreenHeader title={t('settings')} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* PROFIL DYNAMIQUE */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profil</Text>
+          <Text style={styles.sectionTitle}>{t('profile')}</Text>
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{initials}</Text>
@@ -159,13 +161,13 @@ export default function ParametresScreen() {
           </View>
           <TouchableOpacity style={styles.outlineBtn} activeOpacity={0.8} onPress={() => { setNewName(userName); setShowEdit(true); }}>
             <MaterialIcons name="edit" size={16} color={Colors.secondary} />
-            <Text style={styles.outlineBtnText}>Modifier le profil</Text>
+            <Text style={styles.outlineBtnText}>{t('editProfile')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* PRÉFÉRENCES */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Préférences</Text>
+          <Text style={styles.sectionTitle}>{t('preferences')}</Text>
 
           <Text style={styles.fieldLabel}>Langue</Text>
           <View style={styles.segment}>
@@ -177,12 +179,12 @@ export default function ParametresScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Affichage du stock d&apos;œufs</Text>
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t('stockDisplay')}</Text>
           <View style={styles.segment}>
             {([
-              ['egg', 'Œufs'],
-              ['alveole', 'Alvéoles'],
-              ['carton', 'Cartons'],
+              ['egg', t('eggs')],
+              ['alveole', t('traysLabel')],
+              ['carton', t('cartons')],
             ] as [StockDisplay, string][]).map(([value, label]) => (
               <TouchableOpacity key={value} style={[styles.segmentBtn, stockDisplay === value && styles.segmentBtnActive]} onPress={() => setStockDisplay(value)}>
                 <Text style={[styles.segmentText, stockDisplay === value && styles.segmentTextActive]}>{label}</Text>
@@ -190,56 +192,56 @@ export default function ParametresScreen() {
             ))}
           </View>
 
-          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Thème</Text>
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t('theme')}</Text>
           <View style={styles.segment}>
             <TouchableOpacity style={[styles.segmentBtn, theme === 'light' && styles.segmentBtnActive]} onPress={() => changeTheme('light')}>
               <MaterialIcons name="light-mode" size={16} color={theme === 'light' ? Colors.primary : Colors.onSurfaceVariant} />
-              <Text style={[styles.segmentText, theme === 'light' && styles.segmentTextActive]}>Clair</Text>
+              <Text style={[styles.segmentText, theme === 'light' && styles.segmentTextActive]}>{t('light')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.segmentBtn, theme === 'dark' && styles.segmentBtnActive]} onPress={() => changeTheme('dark')}>
               <MaterialIcons name="dark-mode" size={16} color={theme === 'dark' ? Colors.primary : Colors.onSurfaceVariant} />
-              <Text style={[styles.segmentText, theme === 'dark' && styles.segmentTextActive]}>Sombre</Text>
+              <Text style={[styles.segmentText, theme === 'dark' && styles.segmentTextActive]}>{t('dark')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* Mode faible data (CDC §5.1) */}
           <View style={{ marginTop: 8 }}>
-            <ToggleRow icon="data-saver-off" label="Mode faible data" value={lowData} onChange={(v) => { setLowData(v); savePref('pref_lowdata', v ? '1' : '0'); }} />
+            <ToggleRow icon="data-saver-off" label={t('lowData')} value={lowData} onChange={(v) => { setLowData(v); savePref('pref_lowdata', v ? '1' : '0'); }} />
           </View>
         </View>
 
         {/* NOTIFICATIONS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <ToggleRow icon="priority-high" label="Alertes critiques (mortalité)" value={notifCrit} onChange={(v) => { setNotifCrit(v); savePref('pref_notif_crit', v ? '1' : '0'); }} />
-          <ToggleRow icon="inventory-2" label="Alertes de stock" value={notifStock} onChange={(v) => { setNotifStock(v); savePref('pref_notif_stock', v ? '1' : '0'); }} />
-          <ToggleRow icon="trending-down" label="Alertes de production" value={notifProd} onChange={(v) => { setNotifProd(v); savePref('pref_notif_prod', v ? '1' : '0'); }} />
+          <Text style={styles.sectionTitle}>{t('notifications')}</Text>
+          <ToggleRow icon="priority-high" label={t('criticalAlerts')} value={notifCrit} onChange={(v) => { setNotifCrit(v); savePref('pref_notif_crit', v ? '1' : '0'); }} />
+          <ToggleRow icon="inventory-2" label={t('stockAlerts')} value={notifStock} onChange={(v) => { setNotifStock(v); savePref('pref_notif_stock', v ? '1' : '0'); }} />
+          <ToggleRow icon="trending-down" label={t('productionAlerts')} value={notifProd} onChange={(v) => { setNotifProd(v); savePref('pref_notif_prod', v ? '1' : '0'); }} />
         </View>
 
         {/* DONNÉES & SYNC */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Données & Sync</Text>
-          <Text style={styles.syncMeta}>Dernière synchronisation : {lastSync ?? 'jamais'}</Text>
+          <Text style={styles.sectionTitle}>{t('dataSync')}</Text>
+          <Text style={styles.syncMeta}>{t('lastSync')}: {lastSync ?? 'jamais'}</Text>
           <Text style={[styles.pendingText, pendingCount > 0 ? styles.pendingTextWarning : styles.pendingTextOk]}>
             {pendingCount > 0 ? `${pendingCount} élément${pendingCount > 1 ? 's' : ''} en attente de synchronisation` : 'Toutes les données sont synchronisées'}
           </Text>
           <TouchableOpacity style={styles.primaryBtn} activeOpacity={0.85} onPress={handleSyncNow} disabled={syncing}>
             <MaterialIcons name="cloud-sync" size={18} color={Colors.onPrimary} />
-            <Text style={styles.primaryBtnText}>{syncing ? 'Synchronisation...' : 'Synchroniser maintenant'}</Text>
+            <Text style={styles.primaryBtnText}>{syncing ? t('syncing') : t('syncNow')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.outlineBtn, { marginTop: 10, borderColor: Colors.outline }]} activeOpacity={0.8} onPress={() => router.push('/sync')}>
             <MaterialIcons name="queue" size={16} color={Colors.onSurface} />
-            <Text style={[styles.outlineBtnText, { color: Colors.onSurface }]}>Voir la file d&apos;attente</Text>
+            <Text style={[styles.outlineBtnText, { color: Colors.onSurface }]}>{t('queue')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* SÉCURITÉ */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sécurité</Text>
+          <Text style={styles.sectionTitle}>{t('security')}</Text>
           <TouchableOpacity style={styles.helpRow} onPress={() => router.push('/(auth)/forgot-password')}>
             <View style={styles.helpRowLeft}>
               <MaterialIcons name="key" size={20} color={Colors.outline} />
-              <Text style={styles.helpText}>Changer le mot de passe</Text>
+              <Text style={styles.helpText}>{t('changePassword')}</Text>
             </View>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
@@ -247,18 +249,18 @@ export default function ParametresScreen() {
 
         {/* AIDE & SUPPORT */}
         <View style={styles.helpCard}>
-          <Text style={[styles.sectionTitle, { padding: 16, paddingBottom: 8 }]}>Aide & Support</Text>
+          <Text style={[styles.sectionTitle, { padding: 16, paddingBottom: 8 }]}>{t('helpSupport')}</Text>
           <TouchableOpacity style={styles.helpRow} activeOpacity={0.7} onPress={() => setShowFaq(true)}>
             <View style={styles.helpRowLeft}>
               <MaterialIcons name="help" size={20} color={Colors.outline} />
-              <Text style={styles.helpText}>FAQ & Tutoriels</Text>
+              <Text style={styles.helpText}>{t('faq')}</Text>
             </View>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
           <TouchableOpacity style={[styles.helpRow, { borderBottomWidth: 0 }]} activeOpacity={0.7} onPress={() => Linking.openURL('mailto:support@avicoletrack.cm')}>
             <View style={styles.helpRowLeft}>
               <MaterialIcons name="support-agent" size={20} color={Colors.outline} />
-              <Text style={styles.helpText}>Contacter le support</Text>
+              <Text style={styles.helpText}>{t('contactSupport')}</Text>
             </View>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
@@ -266,24 +268,24 @@ export default function ParametresScreen() {
 
         {/* À PROPOS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>À propos</Text>
+          <Text style={styles.sectionTitle}>{t('about')}</Text>
           <View style={styles.aboutRow}>
-            <Text style={styles.helpText}>Version</Text>
+            <Text style={styles.helpText}>{t('version')}</Text>
             <Text style={styles.helpText}>1.0.0 (beta)</Text>
           </View>
           <TouchableOpacity style={styles.aboutRow} onPress={() => setLegalPage('terms')}>
-            <Text style={styles.helpText}>Conditions d&apos;utilisation</Text>
+            <Text style={styles.helpText}>{t('terms')}</Text>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.aboutRow} onPress={() => setLegalPage('privacy')}>
-            <Text style={styles.helpText}>Politique de confidentialité</Text>
+            <Text style={styles.helpText}>{t('privacy')}</Text>
             <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.85} onPress={() => setShowLogout(true)}>
           <MaterialIcons name="logout" size={18} color={Colors.onErrorContainer} />
-          <Text style={styles.logoutText}>Déconnexion</Text>
+          <Text style={styles.logoutText}>{t('logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -292,13 +294,13 @@ export default function ParametresScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Modifier le profil</Text>
+              <Text style={styles.modalTitle}>{t('editProfile')}</Text>
               <TouchableOpacity onPress={() => setShowEdit(false)} hitSlop={10}>
                 <MaterialIcons name="close" size={22} color={Colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
-            <FormField label="Nom complet" icon="person" value={newName} onChangeText={setNewName} />
-            <PrimaryButton label="Enregistrer" onPress={saveProfile} />
+            <FormField label={t('fullName')} icon="person" value={newName} onChangeText={setNewName} />
+            <PrimaryButton label={t('save')} onPress={saveProfile} />
           </View>
         </View>
       </Modal>
@@ -308,17 +310,17 @@ export default function ParametresScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>FAQ & Tutoriels</Text>
+              <Text style={styles.modalTitle}>{t('faq')}</Text>
               <TouchableOpacity onPress={() => setShowFaq(false)} hitSlop={10}>
                 <MaterialIcons name="close" size={22} color={Colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.faqQ}>Comment saisir sans connexion ?</Text>
-            <Text style={styles.faqA}>Vos saisies sont enregistrées localement puis synchronisées automatiquement au retour du réseau.</Text>
-            <Text style={styles.faqQ}>Comment convertir mes œufs en cartons ?</Text>
-            <Text style={styles.faqA}>L&apos;application convertit automatiquement : 30 œufs = 1 alvéole, 360 œufs = 1 carton.</Text>
-            <Text style={styles.faqQ}>Qui peut voir mes données financières ?</Text>
-            <Text style={styles.faqA}>Uniquement le propriétaire et les gestionnaires autorisés de votre ferme.</Text>
+            <Text style={styles.faqQ}>{t('faqOfflineQ')}</Text>
+            <Text style={styles.faqA}>{t('faqOfflineA')}</Text>
+            <Text style={styles.faqQ}>{t('faqEggsQ')}</Text>
+            <Text style={styles.faqA}>{t('faqEggsA')}</Text>
+            <Text style={styles.faqQ}>{t('faqFinanceQ')}</Text>
+            <Text style={styles.faqA}>{t('faqFinanceA')}</Text>
           </View>
         </View>
       </Modal>
@@ -347,7 +349,7 @@ export default function ParametresScreen() {
                 <Text style={styles.faqA}>Ne partagez jamais votre mot de passe ou vos codes de récupération. Contactez le support pour toute demande concernant votre compte.</Text>
               </>
             )}
-            <PrimaryButton label="Fermer" onPress={() => setLegalPage(null)} />
+            <PrimaryButton label={t('close')} onPress={() => setLegalPage(null)} />
           </View>
         </View>
       </Modal>
