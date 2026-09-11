@@ -297,12 +297,19 @@ def forgot_password(
     reset_token = generate_invitation_token()
     user.password_reset_token_hash = hash_invitation_token(reset_token)
     user.password_reset_expires_at = datetime.utcnow() + timedelta(hours=1)
-    db.commit()
-    send_auth_email(
+    sent = send_auth_email(
         email,
         "Réinitialisation de votre mot de passe",
         f"Ouvrez {settings.frontend_url}/reset-password?token={reset_token}",
     )
+    if not sent:
+        db.rollback()
+        return {
+            "message": "If an account exists for this email, a reset link has been generated.",
+            "email": email,
+            "reset_requested": True,
+        }
+    db.commit()
     return {
         "message": "If an account exists for this email, a reset link has been generated.",
         "email": email,
@@ -345,12 +352,15 @@ def resend_verification(data: ResendVerificationRequest, db: Session = Depends(g
     verification_token = generate_invitation_token()
     user.email_verification_token_hash = hash_invitation_token(verification_token)
     user.email_verification_expires_at = now + VERIFICATION_TOKEN_LIFETIME
-    db.commit()
-    send_auth_email(
+    sent = send_auth_email(
         user.email,
         "Vérifiez votre adresse e-mail",
         f"Ouvrez {settings.frontend_url}/verify-email?token={verification_token}",
     )
+    if not sent:
+        db.rollback()
+        return {"message": "If the account exists and needs verification, a new email has been sent."}
+    db.commit()
     return {"message": "If the account exists and needs verification, a new email has been sent."}
 
 
