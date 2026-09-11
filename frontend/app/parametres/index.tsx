@@ -11,7 +11,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { clearAuthToken } from '@/lib/auth-storage';
 import { updateProfile } from '@/lib/api';
 import { flushOfflineQueue, LAST_SYNC_KEY } from '@/lib/offline-sync';
-import { usePreferences } from '@/lib/app-preferences';
+import { usePreferences, type StockDisplay } from '@/lib/app-preferences';
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -21,7 +21,7 @@ const formatDateTime = (ts: number) => {
 };
 
 export default function ParametresScreen() {
-  const { language: activeLanguage, theme: activeTheme, setLanguage, setTheme: setAppTheme } = usePreferences();
+  const { language: activeLanguage, theme: activeTheme, stockDisplay, setLanguage, setTheme: setAppTheme, setStockDisplay } = usePreferences();
   const [userName, setUserName] = useState('Utilisateur');
   const [userEmail, setUserEmail] = useState('');
   const [lang, setLang] = useState<'fr' | 'en'>('fr');
@@ -174,6 +174,19 @@ export default function ParametresScreen() {
             <TouchableOpacity style={[styles.segmentBtn, lang === 'en' && styles.segmentBtnActive]} onPress={() => changeLang('en')}>
               <Text style={[styles.segmentText, lang === 'en' && styles.segmentTextActive]}>English</Text>
             </TouchableOpacity>
+          </View>
+
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Affichage du stock d&apos;œufs</Text>
+          <View style={styles.segment}>
+            {([
+              ['egg', 'Œufs'],
+              ['alveole', 'Alvéoles'],
+              ['carton', 'Cartons'],
+            ] as [StockDisplay, string][]).map(([value, label]) => (
+              <TouchableOpacity key={value} style={[styles.segmentBtn, stockDisplay === value && styles.segmentBtnActive]} onPress={() => setStockDisplay(value)}>
+                <Text style={[styles.segmentText, stockDisplay === value && styles.segmentTextActive]}>{label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
           <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Thème</Text>

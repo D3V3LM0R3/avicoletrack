@@ -7,9 +7,10 @@ import { router, useFocusEffect } from 'expo-router';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-system';
 import { ScreenShell } from '@/components/ui/ScreenShell';
 import { StatCard } from '@/components/ui/StatCard';
-import { formatEggStock, getDashboard, getFarmPermissionState, listDailyReports, listFarms, listFlocks, listNotifications, type DashboardSummary, type DailyReport, type Farm, type Flock, type Notification } from '@/lib/api';
+import { formatEggStock, formatStockDisplay, getDashboard, getEggStockBreakdown, getFarmPermissionState, listDailyReports, listFarms, listFlocks, listNotifications, type DashboardSummary, type DailyReport, type Farm, type Flock, type Notification } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { getItem } from '@/lib/storage';
+import { usePreferences } from '@/lib/app-preferences';
 
 // Fonction utilitaire pour formater les nombres en français (ex: 4520 -> "4 520")
 const formatNumber = (num: number | string): string => {
@@ -112,6 +113,7 @@ const FARM_STATUS_META: Record<FarmStatus, { label: string; color: string; backg
 
 export default function DashboardScreen() {
   const { t, language } = useI18n();
+  const { stockDisplay } = usePreferences();
   const [period, setPeriod] = useState(t('today'));
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [role, setRole] = useState('OWNER');
@@ -201,7 +203,7 @@ export default function DashboardScreen() {
             <View style={styles.roleStats}>
               <StatCard icon="pest-control" iconBg={Colors.secondaryContainer} iconColor={Colors.onSecondaryContainer} label="Effectif" value={formatNumber(selectedFarmSummary.hens || 0)} unit="sujets" style={styles.cardHalf} onPress={() => setDetailMetric('hens')} />
               <StatCard icon="warning" iconBg={Colors.errorContainer} iconColor={Colors.onErrorContainer} label="Mortalité" value={formatNumber(selectedFarmSummary.mortality || 0)} unit="sujets" style={styles.cardHalf} onPress={() => setDetailMetric('mortality')} />
-              <StatCard icon="inventory-2" iconBg={Colors.primaryContainer} iconColor={Colors.onPrimaryContainer} label="Stock" value={formatEggStock(selectedFarmSummary.stock || 0, selectedFarm?.cartons, selectedFarm?.alveoli)} unit="" style={styles.cardHalf} onPress={() => setDetailMetric('stock')} />
+              <StatCard icon="inventory-2" iconBg={Colors.primaryContainer} iconColor={Colors.onPrimaryContainer} label="Stock" value={formatStockDisplay(selectedFarmSummary.stock || 0, stockDisplay, selectedFarm?.cartons, selectedFarm?.alveoli)} unit="" style={styles.cardHalf} onPress={() => setDetailMetric('stock')} />
               <StatCard icon="restaurant" iconBg={Colors.secondaryContainer} iconColor={Colors.onSecondaryContainer} label="Aliments" value={formatNumber(selectedFarmSummary.food || 0)} unit={selectedFarm?.food_unit || 'kg'} style={styles.cardHalf} onPress={() => setDetailMetric('food')} />
             </View>
 
@@ -327,7 +329,7 @@ export default function DashboardScreen() {
             iconBg={Colors.primaryContainer}
             iconColor={Colors.onPrimaryContainer}
             label={t('eggStock')}
-            value={formatEggStock(summary?.stock ?? 0, selectedFarm?.cartons, selectedFarm?.alveoli)}
+            value={formatStockDisplay(summary?.stock ?? 0, stockDisplay, selectedFarm?.cartons, selectedFarm?.alveoli)}
             unit=""
             helper="~900 000 FCFA"
             style={styles.cardHalf}
@@ -351,12 +353,13 @@ export default function DashboardScreen() {
             {selectedFarm ? (
               <View style={styles.detailFarm}>
                 <Text style={styles.farmSummaryTitle}>{selectedFarm.name}</Text>
-                <Text style={styles.detailValue}>{detailMetric === 'food' ? `${formatNumber(selectedFarmSummary.food || 0)} ${selectedFarm.food_unit || 'kg'}` : detailMetric === 'stock' ? formatEggStock(selectedFarmSummary.stock || 0, selectedFarm?.cartons, selectedFarm?.alveoli) : detailMetric === 'eggs' ? formatNumber(selectedFarmSummary.eggs || 0) : detailMetric === 'mortality' ? formatNumber(selectedFarmSummary.mortality || 0) : formatNumber(selectedFarmSummary.hens || 0)}</Text>
+                <Text style={styles.detailValue}>{detailMetric === 'food' ? `${formatNumber(selectedFarmSummary.food || 0)} ${selectedFarm.food_unit || 'kg'}` : detailMetric === 'stock' ? `${getEggStockBreakdown(selectedFarmSummary.stock || 0, selectedFarm?.cartons, selectedFarm?.alveoli).total} œufs` : detailMetric === 'eggs' ? formatNumber(selectedFarmSummary.eggs || 0) : detailMetric === 'mortality' ? formatNumber(selectedFarmSummary.mortality || 0) : formatNumber(selectedFarmSummary.hens || 0)}</Text>
                 {(detailMetric === 'stock' || detailMetric === 'food') ? (
                   <View style={styles.detailFlockRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.farmSummaryText}>Unité de la ferme</Text>
-                      <Text style={styles.farmSummaryText}>{detailMetric === 'stock' ? 'Stock d’œufs' : 'Stock d’aliments'}</Text>
+                      <Text style={styles.farmSummaryText}>{detailMetric === 'stock' ? 'Détail du stock d’œufs' : 'Stock d’aliments'}</Text>
+                      {detailMetric === 'stock' && (() => { const stock = getEggStockBreakdown(selectedFarmSummary.stock || 0, selectedFarm?.cartons, selectedFarm?.alveoli); return <Text style={styles.farmSummaryText}>{stock.cartons} carton(s) • {stock.alveoli} alvéole(s) • {stock.eggs} œuf(s) disponibles</Text>; })()}
                     </View>
                     <View style={[styles.statusPill, { backgroundColor: STATUS_META[getMetricStatus(detailMetric, detailMetric === 'stock' ? selectedFarmSummary.stock : selectedFarmSummary.food)].backgroundColor }]}><MaterialIcons name={STATUS_META[getMetricStatus(detailMetric, detailMetric === 'stock' ? selectedFarmSummary.stock : selectedFarmSummary.food)].icon} size={12} color={STATUS_META[getMetricStatus(detailMetric, detailMetric === 'stock' ? selectedFarmSummary.stock : selectedFarmSummary.food)].color} /><Text style={[styles.statusPillText, { color: STATUS_META[getMetricStatus(detailMetric, detailMetric === 'stock' ? selectedFarmSummary.stock : selectedFarmSummary.food)].color }]}>{STATUS_META[getMetricStatus(detailMetric, detailMetric === 'stock' ? selectedFarmSummary.stock : selectedFarmSummary.food)].label}</Text></View>
                   </View>

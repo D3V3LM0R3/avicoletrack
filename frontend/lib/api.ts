@@ -194,6 +194,27 @@ export const formatEggStock = (eggStock: number, cartons?: number, alveoli?: num
   return `${cartonCount}crt${alveoliCount}alv`;
 };
 
+export const getEggStockBreakdown = (eggStock: number, cartons?: number, alveoli?: number) => {
+  const total = Math.max(0, Math.floor(eggStock || 0));
+  const cartonCount = cartons ?? Math.floor(total / 360);
+  const alveoliCount = alveoli ?? Math.floor((total % 360) / 30);
+  const looseEggs = Math.max(0, total - cartonCount * 360 - alveoliCount * 30);
+  return { total, cartons: cartonCount, alveoli: alveoliCount, eggs: looseEggs };
+};
+
+export const formatStockDisplay = (eggStock: number, display: 'carton' | 'alveole' | 'egg', cartons?: number, alveoli?: number): string => {
+  const breakdown = getEggStockBreakdown(eggStock, cartons, alveoli);
+  if (display === 'carton') {
+    const value = Math.floor(breakdown.total / 360);
+    return `${value} carton${value === 1 ? '' : 's'}`;
+  }
+  if (display === 'alveole') {
+    const value = Math.floor(breakdown.total / 30);
+    return `${value} alvéole${value === 1 ? '' : 's'}`;
+  }
+  return `${breakdown.total} œuf${breakdown.total === 1 ? '' : 's'}`;
+};
+
 export type Flock = {
   id: number;
   farm_id: number;
