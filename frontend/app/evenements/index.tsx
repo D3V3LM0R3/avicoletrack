@@ -221,6 +221,8 @@ export default function EvenementsScreen() {
           event_date: payload.event_date,
           description: null,
           reminder_date: payload.reminder_date ?? null,
+          financial_type: payload.financial_type ?? null,
+          financial_amount: payload.financial_amount ?? null,
         });
         resetForm();
         setFlashMessage('Événement enregistré localement.');

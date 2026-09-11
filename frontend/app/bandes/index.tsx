@@ -166,7 +166,17 @@ export default function BandesScreen() {
       const payload = { farm_id: selectedFarm.id, name: normalizedName, breed: breed.trim() || 'ISA Brown', bird_count: count, start_date: startDate.toISOString().slice(0, 10) };
 
       if (!isOnline) {
-        await enqueueOfflineItem({ type: 'flock', createdAt: Date.now(), farm_id: selectedFarm.id, name: normalizedName, bird_count: count, breed: payload.breed, start_date: payload.start_date });
+        const localId = -Date.now();
+        await enqueueOfflineItem({ type: 'flock', createdAt: Date.now(), local_id: localId, farm_id: selectedFarm.id, name: normalizedName, bird_count: count, breed: payload.breed, start_date: payload.start_date });
+        setFlocks((current) => [...current, {
+          id: String(localId),
+          farmId: selectedFarm.id,
+          name: normalizedName,
+          breed: payload.breed,
+          start: payload.start_date,
+          birdCount: count,
+          archived: false,
+        }]);
         setShowCreate(false); setName(''); setBreed('ISA Brown'); setBirdCount(''); setStartDate(new Date());
         Alert.alert('Mode hors-ligne', 'Bande enregistrée localement. Elle sera synchronisée au retour du réseau.', [{ text: 'OK' }]);
         return;

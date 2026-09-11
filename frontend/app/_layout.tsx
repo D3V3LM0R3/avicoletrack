@@ -1,13 +1,15 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Redirect, Stack, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 import { AUTH_CHANGED_EVENT, getAuthToken } from '@/lib/auth-storage';
 import { PreferencesProvider, usePreferences } from '@/lib/app-preferences';
+import { flushOfflineQueue } from '@/lib/offline-sync';
 
 const ROUTE_ACCESS: Record<string, string[]> = {
   setup: ['OWNER'],
@@ -121,6 +123,7 @@ function AppNavigation() {
       <ThemeProvider
       value={theme === 'dark' ? DarkTheme : DefaultTheme}
       >
+      <OfflineQueueReplayer />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
@@ -137,4 +140,37 @@ function AppNavigation() {
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       </ThemeProvider>
   );
+}
+
+function OfflineQueueReplayer() {
+  const replaying = useRef(false);
+
+  useEffect(() => {
+    const replay = async () => {
+      if (replaying.current || !(await getAuthToken())) return;
+      replaying.current = true;
+      try {
+        await flushOfflineQueue();
+      } finally {
+        replaying.current = false;
+      }
+    };
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      if (state.isConnected === true) void replay();
+    });
+    const handleAuthChanged = () => void replay();
+    if (typeof window !== 'undefined') {
+      window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+    }
+    void replay();
+    return () => {
+      unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+      }
+    };
+  }, []);
+
+  return null;
 }

@@ -55,7 +55,27 @@ export default function FermesScreen() {
     try {
       const payload = { name: name.trim(), location: location.trim() || undefined };
       if (!isOnline) {
-        await enqueueOfflineItem({ type: 'farm', createdAt: Date.now(), name: payload.name, location: payload.location ?? null });
+        const localId = -Date.now();
+        await enqueueOfflineItem({ type: 'farm', createdAt: Date.now(), local_id: localId, name: payload.name, location: payload.location ?? null });
+        setFarms((current) => [...current, {
+          id: localId,
+          enterprise_id: 0,
+          name: payload.name,
+          location: payload.location ?? null,
+          active: true,
+          created_at: new Date().toISOString(),
+          food_type: null,
+          food_quantity: 0,
+          food_unit: 'kg',
+          water_quantity: 0,
+          water_unit: 'L',
+          egg_stock: 0,
+          cartons: 0,
+          alveoli: 0,
+          mortality: 0,
+          members: 0,
+          flocks: 0,
+        }]);
         setShowCreate(false); setName(''); setLocation(''); setNameError('');
         Alert.alert('Mode hors-ligne', 'Ferme enregistrée localement. Elle sera synchronisée au retour du réseau.', [{ text: 'OK' }]);
         return;

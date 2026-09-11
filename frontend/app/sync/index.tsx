@@ -8,7 +8,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { flushOfflineQueue, loadOfflineQueue, LAST_SYNC_KEY, saveOfflineQueue, type OfflineQueueItem } from '@/lib/offline-sync';
+import { flushOfflineQueue, loadOfflineQueue, LAST_SYNC_KEY, saveOfflineQueue, syncOfflineItem, type OfflineQueueItem } from '@/lib/offline-sync';
 
 /* ================= TYPES & HELPERS ================= */
 
@@ -96,34 +96,52 @@ export default function SyncScreen() {
     setSyncingAll(true);
     setItems((p) => p.map((i) => ({ ...i, status: 'syncing' as ItemStatus })));
 
-    const result = await flushOfflineQueue();
-    const nextQueue = await loadOfflineQueue();
-    setItems(nextQueue.map((q) => ({ ...q, status: 'pending' as ItemStatus })) as QueueItem[]);
+    try {
+      const result = await flushOfflineQueue();
+      const nextQueue = await loadOfflineQueue();
+      const failedKeys = new Set(result.failedItems.map((item) => `${item.type}:${item.createdAt}`));
+      setItems(nextQueue.map((q) => ({
+        ...q,
+        status: failedKeys.has(`${q.type}:${q.createdAt}`) ? 'error' : 'pending',
+      })) as QueueItem[]);
 
-    const now = Date.now();
-    await AsyncStorage.setItem(LAST_SYNC_KEY, String(now));
-    setLastSync(formatDateTime(now));
-    setSyncingAll(false);
-    Alert.alert(
-      'Synchronisation terminée',
-      `${result.synced} élément${result.synced > 1 ? 's' : ''} synchronisé${result.synced > 1 ? 's' : ''}${result.failed > 0 ? `, ${result.failed} échec${result.failed > 1 ? 's' : ''}` : ''}.`
-    );
+      if (result.synced > 0) {
+        const now = Date.now();
+        setLastSync(formatDateTime(now));
+      }
+      Alert.alert(
+        'Synchronisation terminée',
+        `${result.synced} élément${result.synced > 1 ? 's' : ''} synchronisé${result.synced > 1 ? 's' : ''}${result.failed > 0 ? `, ${result.failed} échec${result.failed > 1 ? 's' : ''}` : ''}.`
+      );
+    } catch (error) {
+      setItems((p) => p.map((item) => ({ ...item, status: 'error' })));
+      Alert.alert('Échec de synchronisation', error instanceof Error ? error.message : 'Les données restent conservées sur cet appareil.');
+    } finally {
+      setSyncingAll(false);
+    }
   };
 
   /* ----- Réessayer un élément ----- */
-  const retryItem = async (target: QueueItem) => {
+  const retryItem = async (target: QueueItem, targetIndex: number) => {
     if (!isOnline) {
       Alert.alert('Hors ligne', 'Connexion requise pour réessayer.');
       return;
     }
     setItems((p) => p.map((i) => (i.createdAt === target.createdAt ? { ...i, status: 'syncing' } : i)));
-    await new Promise((r) => setTimeout(r, 1200));
-    setItems((p) => {
-      const next = p.filter((i) => i.createdAt !== target.createdAt);
-      persistQueue(next);
-      return next;
-    });
-    Alert.alert('Succès', 'Élément synchronisé.');
+    try {
+      const { status, ...queueItem } = target;
+      await syncOfflineItem(queueItem as OfflineQueueItem);
+      const queue = await loadOfflineQueue();
+      const queueIndex = queue.findIndex((item) => item.createdAt === target.createdAt && item.type === target.type);
+      if (queueIndex >= 0) queue.splice(queueIndex, 1);
+      await saveOfflineQueue(queue);
+      setItems((p) => p.filter((_, index) => index !== targetIndex));
+      setLastSync(formatDateTime(Date.now()));
+      Alert.alert('Succès', 'Élément synchronisé.');
+    } catch (error) {
+      setItems((p) => p.map((item, index) => index === targetIndex ? { ...item, status: 'error' } : item));
+      Alert.alert('Échec de synchronisation', error instanceof Error ? error.message : 'Les données restent conservées sur cet appareil.');
+    }
   };
 
   /* ----- Supprimer un brouillon ----- */
@@ -187,7 +205,7 @@ export default function SyncScreen() {
             <Text style={styles.emptyText}>Dernière synchro : {lastSync ?? 'jamais'}</Text>
           </View>
         ) : (
-          items.map((it) => {
+          items.map((it, index) => {
             const s = summarize(it);
             const st = STATUS_CONFIG[it.status];
             return (
@@ -214,7 +232,7 @@ export default function SyncScreen() {
                 <View style={styles.actionsCol}>
                   {it.status === 'error' && (
                     <>
-                      <TouchableOpacity style={styles.actionBtn} onPress={() => retryItem(it)} hitSlop={6}>
+                      <TouchableOpacity style={styles.actionBtn} onPress={() => retryItem(it, index)} hitSlop={6}>
                         <MaterialIcons name="restart-alt" size={18} color={Colors.primary} />
                       </TouchableOpacity>
                       <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/sync/conflit' as Href)} hitSlop={6}>
