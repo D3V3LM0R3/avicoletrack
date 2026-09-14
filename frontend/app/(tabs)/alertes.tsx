@@ -8,6 +8,7 @@ import { ScreenShell } from '@/components/ui/ScreenShell';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { listNotifications, markNotificationRead, type Notification } from '@/lib/api';
 import { loadNotificationPreferences, notificationPreferenceEnabled, type NotificationPreferences } from '@/lib/notification-preferences';
+import { useI18n } from '@/lib/i18n';
 
 /* ================= TYPES & DONNÉES ================= */
 
@@ -45,6 +46,7 @@ const FILTERS: { key: 'toutes' | AlertType; label: string }[] = [
 
 export default function AlertesScreen() {
   const { width } = useWindowDimensions();
+  const { t } = useI18n();
   const [filter, setFilter] = useState<'toutes' | AlertType>('toutes');
   const [selected, setSelected] = useState<AlertItem | null>(null);
   const [processedIds, setProcessedIds] = useState<number[]>([]);
@@ -80,9 +82,9 @@ export default function AlertesScreen() {
   return (
     <ScreenShell activeTab="alertes">
       <View style={styles.header}>
-        <Text style={styles.title}>Alertes</Text>
+        <Text style={styles.title}>{t('alertTitle')}</Text>
         <Text style={styles.subtitle}>
-          {activeAlerts.length} alerte{activeAlerts.length > 1 ? 's' : ''} active{activeAlerts.length > 1 ? 's' : ''} à traiter
+          {activeAlerts.length} alert{activeAlerts.length > 1 ? 's' : ''} {t('activeToProcess')}
         </Text>
       </View>
 
@@ -95,7 +97,7 @@ export default function AlertesScreen() {
             onPress={() => setFilter(f.key)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.chipText, filter === f.key && styles.chipTextActive]}>{f.label}</Text>
+            <Text style={[styles.chipText, filter === f.key && styles.chipTextActive]}>{f.key === 'toutes' ? t('all') : f.key === 'mortalite' ? t('mortality') : f.key === 'production' ? t('production') : f.key === 'stock' ? t('stock') : t('health')}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -104,16 +106,16 @@ export default function AlertesScreen() {
         {isLoading ? (
           <View style={styles.empty}>
             <MaterialIcons name="hourglass-empty" size={48} color={Colors.primary} />
-            <Text style={styles.emptyTitle}>Chargement des alertes…</Text>
-            <Text style={styles.emptyText}>Récupération des notifications depuis le backend.</Text>
+            <Text style={styles.emptyTitle}>{t('loadingAlerts')}</Text>
+            <Text style={styles.emptyText}>{t('fetchingNotifications')}</Text>
           </View>
         ) : filtered.length === 0 ? (
           /* ---------- ÉTAT VIDE ---------- */
           <View style={styles.empty}>
             <MaterialIcons name="notifications-none" size={48} color={Colors.outline} />
-            <Text style={styles.emptyTitle}>Aucune alerte active</Text>
+            <Text style={styles.emptyTitle}>{t('noActiveAlerts')}</Text>
             <Text style={styles.emptyText}>
-              Tout va bien pour le moment. Les nouvelles alertes apparaîtront ici.
+              {t('alertsWillAppear')}
             </Text>
           </View>
         ) : (
@@ -144,7 +146,7 @@ export default function AlertesScreen() {
                   <View style={styles.itemFooter}>
                     <Text style={styles.itemTime}>{a.time}</Text>
                     <View style={styles.seeDetails}>
-                      <Text style={styles.seeDetailsText}>Voir les détails</Text>
+                      <Text style={styles.seeDetailsText}>{t('details')}</Text>
                       <MaterialIcons name="chevron-right" size={14} color={Colors.primary} />
                     </View>
                   </View>
@@ -184,13 +186,13 @@ export default function AlertesScreen() {
                   <View style={styles.valueBox}>
                     {selected.value && (
                       <View style={styles.valueRow}>
-                        <Text style={styles.valueLabel}>Valeur concernée</Text>
+                        <Text style={styles.valueLabel}>{t('affectedValue')}</Text>
                         <Text style={styles.valueValue}>{selected.value}</Text>
                       </View>
                     )}
                     {selected.threshold && (
                       <View style={styles.valueRow}>
-                        <Text style={styles.valueLabel}>Seuil dépassé</Text>
+                        <Text style={styles.valueLabel}>{t('thresholdExceeded')}</Text>
                         <Text style={[styles.valueValue, { color: Colors.error }]}>{selected.threshold}</Text>
                       </View>
                     )}
@@ -201,14 +203,14 @@ export default function AlertesScreen() {
                   <View style={styles.recoBox}>
                     <MaterialIcons name="lightbulb" size={18} color={Colors.warning} style={{ marginTop: 2 }} />
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.recoTitle}>Recommandation</Text>
+                      <Text style={styles.recoTitle}>{t('recommendation')}</Text>
                       <Text style={styles.recoText}>{selected.recommendation}</Text>
                     </View>
                   </View>
                 )}
 
                 <PrimaryButton
-                  label="Voir le rapport lié"
+                  label={t('linkedReport')}
                   icon="assessment"
                   onPress={() => {
                     setSelected(null);
@@ -218,7 +220,7 @@ export default function AlertesScreen() {
 
                 <TouchableOpacity style={styles.processedBtn} onPress={() => markProcessed(selected.id)}>
                   <MaterialIcons name="check-circle" size={16} color={Colors.primary} />
-                  <Text style={styles.processedText}>Marquer comme lue</Text>
+                  <Text style={styles.processedText}>{t('markRead')}</Text>
                 </TouchableOpacity>
               </>
             )}

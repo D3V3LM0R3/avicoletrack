@@ -8,14 +8,11 @@ import { Href, router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { clearAuthToken } from '@/lib/auth-storage';
+import { useI18n } from '@/lib/i18n';
 
 type Role = 'OWNER' | 'MANAGER' | 'WORKER';
 
-const ROLE_LABELS: Record<Role, string> = {
-  OWNER: 'Propriétaire',
-  MANAGER: 'Gestionnaire',
-  WORKER: 'Éleveur',
-};
+const ROLE_KEYS: Record<Role, 'owner' | 'manager' | 'worker'> = { OWNER: 'owner', MANAGER: 'manager', WORKER: 'worker' };
 
 interface MenuItem {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -25,6 +22,7 @@ interface MenuItem {
 }
 
 export default function MenuScreen() {
+  const { t } = useI18n();
   const [userName, setUserName] = useState('Utilisateur');
   const [enterpriseName, setEnterpriseName] = useState('');
   const [role, setRole] = useState<Role>('OWNER');
@@ -64,15 +62,15 @@ export default function MenuScreen() {
   // Sections dynamiques selon le rôle (permissions backend)
   const sections: { title: string; items: MenuItem[] }[] = [
     {
-      title: 'Exploitation',
+      title: t('operations'),
       items: [
-        { icon: 'flutter-dash', label: 'Bandes', href: '/bandes' },
-        { icon: 'inventory', label: 'Stocks & Inventaire', href: '/stocks' },
-        { icon: 'swap-horiz', label: 'Mouvements de stock', href: '/mouvements' },
+        { icon: 'flutter-dash', label: t('flocks'), href: '/bandes' },
+        { icon: 'inventory', label: t('inventory'), href: '/stocks' },
+        { icon: 'swap-horiz', label: t('stockMovements'), href: '/mouvements' },
         ...(role === 'OWNER'
           ? ([
-              { icon: 'business', label: 'Fermes & résultats', href: '/fermes' },
-              { icon: 'badge', label: 'Personnel', href: '/personnel' },
+              { icon: 'business', label: t('farmsResults'), href: '/fermes' },
+              { icon: 'badge', label: t('personnel'), href: '/personnel' },
             ] as MenuItem[])
           : []),
       ],
@@ -80,35 +78,35 @@ export default function MenuScreen() {
     ...(role !== 'WORKER'
       ? [
           {
-            title: 'Analyse',
+            title: t('analysis'),
             items: [
-              { icon: 'insights', label: 'Analyse multi-fermes', href: '/analyse' },
-              { icon: 'event', label: 'Événements & rappels', href: '/evenements' },
-              { icon: 'payments', label: 'Prix du marché', href: '/prix' },
-              { icon: 'history', label: 'Audit & Historique', href: '/audit' },
+              { icon: 'insights', label: t('multiFarmAnalysis'), href: '/analyse' },
+              { icon: 'event', label: t('eventsReminders'), href: '/evenements' },
+              { icon: 'payments', label: t('marketPricesMenu'), href: '/prix' },
+              { icon: 'history', label: t('auditHistory'), href: '/audit' },
             ] as MenuItem[],
           },
         ]
       : []),
     {
-      title: 'Communication',
-      items: [{ icon: 'chat', label: 'Messages', href: '/chat' }],
+      title: t('communication'),
+      items: [{ icon: 'chat', label: t('messages'), href: '/chat' }],
     },
     {
-      title: 'Divertissement',
-      items: [{ icon: 'sports-esports', label: 'Mini-jeux', href: '/games' }],
+      title: t('entertainment'),
+      items: [{ icon: 'sports-esports', label: t('miniGames'), href: '/games' }],
     },
     {
-      title: 'Système',
+      title: t('system'),
       items: [
         {
           icon: 'cloud-sync',
-          label: 'Centre de synchronisation',
+          label: t('syncCenter'),
           href: '/sync',
           badge: syncCount > 0 ? String(syncCount) : undefined,
         },
-        { icon: 'settings', label: 'Paramètres', href: '/parametres' },
-        { icon: 'help', label: 'Aide & Support', href: '/parametres' },
+        { icon: 'settings', label: t('settings'), href: '/parametres' },
+        { icon: 'help', label: t('helpSupport'), href: '/parametres' },
       ],
     },
   ];
@@ -131,7 +129,7 @@ export default function MenuScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.profileName}>{userName}</Text>
             <Text style={styles.profileFarm}>
-              {ROLE_LABELS[role]} • {enterpriseName || 'Entreprise'}
+              {t(ROLE_KEYS[role])} • {enterpriseName || t('enterprise')}
             </Text>
             <View style={[styles.connectedPill, !isOnline && styles.offlinePill]}>
               <MaterialIcons
@@ -140,7 +138,7 @@ export default function MenuScreen() {
                 color={syncCount > 0 ? Colors.onSecondaryContainer : isOnline ? Colors.onTertiaryContainer : Colors.onErrorContainer}
               />
               <Text style={[styles.connectedText, !isOnline && styles.offlineText]}>
-                {syncCount > 0 ? `En attente (${syncCount})` : isOnline ? 'À jour' : 'Hors ligne'}
+                {syncCount > 0 ? `${t('waiting')} (${syncCount})` : isOnline ? t('upToDate') : t('offline')}
               </Text>
             </View>
           </View>
@@ -173,7 +171,7 @@ export default function MenuScreen() {
 
         <TouchableOpacity style={styles.logout} activeOpacity={0.8} onPress={() => setShowLogout(true)}>
           <MaterialIcons name="logout" size={18} color={Colors.error} />
-          <Text style={styles.logoutText}>Déconnexion</Text>
+          <Text style={styles.logoutText}>{t('logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -182,17 +180,17 @@ export default function MenuScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <MaterialIcons name="logout" size={28} color={Colors.error} />
-            <Text style={styles.modalTitle}>Se déconnecter ?</Text>
+            <Text style={styles.modalTitle}>{t('logout')} ?</Text>
             <Text style={styles.modalText}>
               {syncCount > 0
-                ? `Vous avez ${syncCount} élément${syncCount > 1 ? 's' : ''} en attente de synchronisation. Ils seront conservés sur cet appareil et synchronisés à votre prochaine connexion.`
-                : 'Vous pourrez vous reconnecter à tout moment.'}
+                ? `${syncCount} ${t('waiting').toLowerCase()} ${syncCount > 1 ? 'items' : 'item'} - ${t('syncCenter')}.`
+                : t('upToDate')}
             </Text>
             <TouchableOpacity style={styles.dangerBtn} onPress={handleLogout}>
-              <Text style={styles.dangerBtnText}>Se déconnecter</Text>
+              <Text style={styles.dangerBtnText}>{t('logout')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowLogout(false)} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>Annuler</Text>
+              <Text style={styles.cancelText}>{t('cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

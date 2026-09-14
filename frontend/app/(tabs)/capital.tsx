@@ -99,7 +99,7 @@ export default function CapitalScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Header with period selector */}
         <View style={styles.headerSection}>
-          <Text style={styles.title}>Capital & Résultats</Text>
+          <Text style={styles.title}>{t('capitalResults')}</Text>
           <View style={styles.periodSelector}>
             {(['1d', '7d', '30d', '90d', 'year', 'all'] as const).map((p) => (
               <TouchableOpacity
@@ -108,7 +108,7 @@ export default function CapitalScreen() {
                 onPress={() => setPeriod(p)}
               >
                 <Text style={[styles.periodButtonText, period === p && styles.periodButtonTextActive]}>
-                  {p === '1d' ? 'Jour' : p === '7d' ? 'Semaine' : p === '30d' ? 'Mois' : p === '90d' ? '90j' : p === 'year' ? 'An' : 'Tout'}
+                  {p === '1d' ? t('day') : p === '7d' ? t('week') : p === '30d' ? t('month') : p === '90d' ? '90d' : p === 'year' ? t('year') : t('allTime')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -126,7 +126,7 @@ export default function CapitalScreen() {
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <MaterialIcons name="trending-up" size={20} color={Colors.primary} />
-                  <Text style={styles.cardLabel}>Capital investi</Text>
+                  <Text style={styles.cardLabel}>{t('investedCapital')}</Text>
                 </View>
                 <Text style={[styles.cardValue, styles.capital]}>
                   {formatCurrency(financialData.total_capital)}
@@ -136,7 +136,7 @@ export default function CapitalScreen() {
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <MaterialIcons name="shopping-cart" size={20} color={Colors.tertiary} />
-                  <Text style={styles.cardLabel}>Revenu</Text>
+                  <Text style={styles.cardLabel}>{t('revenue')}</Text>
                 </View>
                 <Text style={[styles.cardValue, styles.revenue]}>
                   {formatCurrency(financialData.total_revenue)}
@@ -146,7 +146,7 @@ export default function CapitalScreen() {
               <View style={styles.card}>
                 <View style={styles.cardHeader}>
                   <MaterialIcons name="money-off" size={20} color={Colors.error} />
-                  <Text style={styles.cardLabel}>Coûts</Text>
+                  <Text style={styles.cardLabel}>{t('costs')}</Text>
                 </View>
                 <Text style={[styles.cardValue, styles.cost]}>
                   {formatCurrency(financialData.total_cost)}
@@ -156,13 +156,13 @@ export default function CapitalScreen() {
               <View style={[styles.card, styles.cardProfit]}>
                 <View style={styles.cardHeader}>
                   <MaterialIcons name="attach-money" size={20} color={Colors.surface} />
-                  <Text style={[styles.cardLabel, styles.cardLabelWhite]}>Résultat net</Text>
+                  <Text style={[styles.cardLabel, styles.cardLabelWhite]}>{t('netResult')}</Text>
                 </View>
                 <Text style={[styles.cardValue, styles.profitValue]}>
                   {formatCurrency(financialData.net_profit)}
                 </Text>
                 <Text style={styles.marginText}>
-                  Marge: {formatPercent(financialData.margin_percentage)}
+                  {t('margin')}: {formatPercent(financialData.margin_percentage)}
                 </Text>
               </View>
             </View>
@@ -170,7 +170,7 @@ export default function CapitalScreen() {
             {/* Market Prices Section */}
             {Object.keys(marketPrices).length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Prix du marché</Text>
+                <Text style={styles.sectionTitle}>{t('marketPrices')}</Text>
                 <View style={styles.pricesGrid}>
                   {Object.entries(marketPrices).map(([product, data]) => (
                     <View key={product} style={styles.priceCard}>
@@ -190,7 +190,7 @@ export default function CapitalScreen() {
             {/* Profit Trends Chart */}
             {profitTrends.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Tendance du résultat</Text>
+                <Text style={styles.sectionTitle}>{t('resultTrend')}</Text>
                 <View style={styles.trendsContainer}>
                   {profitTrends.map((trend) => (
                     <View key={trend.month} style={styles.trendRow}>
@@ -234,7 +234,7 @@ export default function CapitalScreen() {
             {/* Farm Comparison */}
             {financialData.farms.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Comparaison des fermes</Text>
+                <Text style={styles.sectionTitle}>{t('farmComparison')}</Text>
                 {financialData.farms.map((farm, idx) => (
                   <View key={farm.farm_id} style={styles.farmCard}>
                     <View style={styles.farmHeader}>
@@ -277,9 +277,9 @@ export default function CapitalScreen() {
             )}
             {financialData.comparison && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Points de comparaison</Text>
-                {financialData.comparison.highest_productivity && <Text style={styles.comparisonText}>Production la plus élevée : {financialData.comparison.highest_productivity.farm_name} ({financialData.comparison.highest_productivity.eggs} œufs)</Text>}
-                {financialData.comparison.highest_mortality && <Text style={styles.comparisonText}>Mortalité la plus élevée : {financialData.comparison.highest_mortality.farm_name} ({financialData.comparison.highest_mortality.mortality})</Text>}
+                <Text style={styles.sectionTitle}>{t('comparisonPoints')}</Text>
+                {financialData.comparison.highest_productivity && <Text style={styles.comparisonText}>{t('highestProduction')} : {financialData.comparison.highest_productivity.farm_name} ({financialData.comparison.highest_productivity.eggs} {t('eggs')})</Text>}
+                {financialData.comparison.highest_mortality && <Text style={styles.comparisonText}>{t('highestMortality')} : {financialData.comparison.highest_mortality.farm_name} ({financialData.comparison.highest_mortality.mortality})</Text>}
               </View>
             )}
           </>

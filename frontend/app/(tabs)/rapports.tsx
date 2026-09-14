@@ -6,11 +6,12 @@ import { getCurrentUser, getFarmPermissionState, listDailyReports, listEvents, l
 import { exportExcelFile, exportPdfFile } from '@/lib/report-export';
 import { Colors, Radius, Spacing, Typography } from '@/constants/design-system';
 import { ScreenShell } from '@/components/ui/ScreenShell';
+import { useI18n } from '@/lib/i18n';
 
 type ReportType = 'saisie' | 'mouvements' | 'evenements';
 type ExportItem = DailyReport | StockMovement | Event;
 type ExportTarget = { type: ReportType; items: ExportItem[] };
-const labels: Record<ReportType, string> = { saisie: 'Saisies', mouvements: 'Mouvements', evenements: 'Événements' };
+const exportLabels: Record<ReportType, string> = { saisie: 'Saisies', mouvements: 'Mouvements', evenements: 'Événements' };
 const formatDateTime = (value?: string | null) => value ? new Date(value).toLocaleString('fr-FR') : '—';
 const reportStatus = (type: ReportType, item: ExportItem) => type === 'saisie' ? '—' : type === 'mouvements' ? ((item as StockMovement).status === 'validated' ? 'Confirmé' : 'Annulé') : ((item as Event).status === 'confirmed' ? 'Confirmé' : 'Annulé');
 const personName = (name?: string | null, id?: number | null) => name ?? (id ? `Utilisateur #${id}` : '—');
@@ -24,6 +25,8 @@ const flockAgeWeeks = (startDate?: string | null, reportDate?: string) => {
 export default function ReportsScreen() {
   const { farmId, flockId } = useLocalSearchParams<{ farmId?: string; flockId?: string }>();
   const [reportType, setReportType] = useState<ReportType>('saisie');
+  const { t } = useI18n();
+  const labels: Record<ReportType, string> = { saisie: t('entries'), mouvements: t('movements'), evenements: t('events') };
   const [dailyReports, setDailyReports] = useState<DailyReport[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -111,7 +114,7 @@ export default function ReportsScreen() {
     try {
       const { type, items } = exportTarget;
       const { headers } = exportFields(type, items[0]);
-      await exportPdfFile(labels[type], headers, items.map((item) => exportFields(type, item).values));
+      await exportPdfFile(exportLabels[type], headers, items.map((item) => exportFields(type, item).values));
       setExportTarget(null);
       setSelectedExportIds([]);
     } catch (error) {
@@ -125,7 +128,7 @@ export default function ReportsScreen() {
       const { type, items } = exportTarget;
       const first = exportFields(type, items[0]);
       const rows = [first.headers, ...items.map((item) => exportFields(type, item).values)];
-      await exportExcelFile(labels[type], type, first.headers, rows.slice(1));
+      await exportExcelFile(exportLabels[type], type, first.headers, rows.slice(1));
       setExportTarget(null);
       setSelectedExportIds([]);
     } catch (error) {
@@ -140,13 +143,13 @@ export default function ReportsScreen() {
 
   const dailyCard = (report: DailyReport) => <View key={report.id} style={styles.card}>
     <Text style={styles.cardTitle}>{farmName(report.farm_id)} • {report.report_date}</Text>
-    <Text style={styles.detail}>Effectif: {report.bird_count} • Mortalité: {report.mortality} • Œufs: {report.eggs_produced}</Text>
-    <Text style={styles.detail}>Aliments: {report.feed_used_bags ?? 0} kg • Eau: {report.water_used_liters ?? 0} L</Text>
-    <Text style={styles.detail}>Créé par: {personName(report.author_name ?? report.created_by_name, report.created_by)}</Text>
-    <Text style={styles.detail}>Créé le: {formatDateTime(report.created_at)}</Text>
-    <Text style={styles.detail}>{report.notes || 'Aucune observation.'}</Text>
-    <View style={styles.actions}>{permissions.send_notification && <TouchableOpacity style={styles.action} onPress={() => setNotificationReport(report)}><MaterialIcons name="send" size={17} color={Colors.primary} /><Text style={styles.actionText}>Notifier</Text></TouchableOpacity>}{permissions.create_event && <TouchableOpacity style={styles.action} onPress={() => router.push({ pathname: '/evenements', params: { farmId: String(report.farm_id), flockId: String(report.flock_id ?? '') } })}><MaterialIcons name="event" size={17} color={Colors.primary} /><Text style={styles.actionText}>Événement</Text></TouchableOpacity>}{(role === 'OWNER' || permissions.confirm_stock_movement) && <TouchableOpacity style={styles.action} onPress={() => router.push({ pathname: '/stocks/mouvement', params: { farmId: String(report.farm_id), flockId: String(report.flock_id ?? '') } })}><MaterialIcons name="swap-horiz" size={17} color={Colors.primary} /><Text style={styles.actionText}>Mouvement</Text></TouchableOpacity>}</View>
-    {permissions.export_daily_reports && <TouchableOpacity style={styles.exportLink} onPress={() => selectExportItem('saisie', report)}><MaterialIcons name={selectedExportIds.includes(report.id ?? -1) ? 'check-box' : 'check-box-outline-blank'} size={17} color={Colors.primary} /><Text style={styles.actionText}>Sélectionner</Text></TouchableOpacity>}
+    <Text style={styles.detail}>{t('fieldStaff')}: {report.bird_count} • {t('mortality')}: {report.mortality} • {t('eggs')}: {report.eggs_produced}</Text>
+    <Text style={styles.detail}>{t('feed')}: {report.feed_used_bags ?? 0} kg • {t('water')}: {report.water_used_liters ?? 0} L</Text>
+    <Text style={styles.detail}>{t('createdBy')}: {personName(report.author_name ?? report.created_by_name, report.created_by)}</Text>
+    <Text style={styles.detail}>{t('createdAt')}: {formatDateTime(report.created_at)}</Text>
+    <Text style={styles.detail}>{report.notes || t('noObservation')}</Text>
+    <View style={styles.actions}>{permissions.send_notification && <TouchableOpacity style={styles.action} onPress={() => setNotificationReport(report)}><MaterialIcons name="send" size={17} color={Colors.primary} /><Text style={styles.actionText}>{t('notify')}</Text></TouchableOpacity>}{permissions.create_event && <TouchableOpacity style={styles.action} onPress={() => router.push({ pathname: '/evenements', params: { farmId: String(report.farm_id), flockId: String(report.flock_id ?? '') } })}><MaterialIcons name="event" size={17} color={Colors.primary} /><Text style={styles.actionText}>{t('event')}</Text></TouchableOpacity>}{(role === 'OWNER' || permissions.confirm_stock_movement) && <TouchableOpacity style={styles.action} onPress={() => router.push({ pathname: '/stocks/mouvement', params: { farmId: String(report.farm_id), flockId: String(report.flock_id ?? '') } })}><MaterialIcons name="swap-horiz" size={17} color={Colors.primary} /><Text style={styles.actionText}>{t('movement')}</Text></TouchableOpacity>}</View>
+    {permissions.export_daily_reports && <TouchableOpacity style={styles.exportLink} onPress={() => selectExportItem('saisie', report)}><MaterialIcons name={selectedExportIds.includes(report.id ?? -1) ? 'check-box' : 'check-box-outline-blank'} size={17} color={Colors.primary} /><Text style={styles.actionText}>{t('select')}</Text></TouchableOpacity>}
   </View>;
 
   return <ScreenShell activeTab="rapports"><ScrollView contentContainerStyle={styles.scroll}><Text style={styles.title}>Rapports</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>{(Object.keys(labels) as ReportType[]).map((key) => <TouchableOpacity key={key} style={[styles.tab, reportType === key && styles.tabActive]} onPress={() => { setReportType(key); setSelectedExportIds([]); }}><Text style={[styles.tabText, reportType === key && styles.tabTextActive]}>{labels[key]}</Text></TouchableOpacity>)}</ScrollView><View style={styles.search}><MaterialIcons name="search" size={18} color={Colors.outline} /><TextInput style={styles.searchInput} placeholder="Rechercher..." value={search} onChangeText={setSearch} /></View>{canView && canExport && visibleExportItems.length > 0 && <View style={styles.exportToolbar}><Text style={styles.selectionText}>{selectedExportIds.length} sélectionné(s)</Text><TouchableOpacity onPress={() => setSelectedExportIds(visibleExportItems.flatMap((item) => item.id === undefined ? [] : [item.id]))}><Text style={styles.toolbarAction}>Tout sélectionner</Text></TouchableOpacity><TouchableOpacity style={styles.exportButton} onPress={() => openExport(reportType, visibleExportItems)}><MaterialIcons name="file-download" size={18} color={Colors.onPrimary} /><Text style={styles.exportText}>Exporter</Text></TouchableOpacity></View>}{loading ? <ActivityIndicator color={Colors.primary} /> : !canView ? <Text style={styles.empty}>Vous n’avez pas l’autorisation de consulter ce rapport.</Text> : reportType === 'saisie' ? daily.map(dailyCard) : reportType === 'mouvements' ? movementRows.map((item) => <View key={item.id} style={styles.card}><Text style={styles.cardTitle}>{farmName(item.farm_id)} • {item.stock_type}</Text><Text style={styles.detail}>{formatDateTime(item.movement_date ?? item.created_at)} • {item.movement_type} • {item.quantity} {item.unit}</Text><Text style={styles.status}>{item.status === 'validated' ? 'Confirmé' : item.status === 'cancelled' ? 'Annulé' : 'En attente'}</Text><Text style={styles.detail}>Traité le: {formatDateTime(item.validated_at)} • Par: {item.validated_by ?? '—'}</Text><Text style={styles.detail}>{item.note || item.confirmation_message || 'Aucun détail.'}</Text>{permissions.export_movement_reports && <TouchableOpacity style={styles.exportLink} onPress={() => selectExportItem('mouvements', item)}><MaterialIcons name={selectedExportIds.includes(item.id ?? -1) ? 'check-box' : 'check-box-outline-blank'} size={17} color={Colors.primary} /><Text style={styles.actionText}>Sélectionner</Text></TouchableOpacity>}</View>) : eventRows.map((item) => <View key={item.id} style={styles.card}><Text style={styles.cardTitle}>{farmName(item.farm_id)} • {item.title}</Text><Text style={styles.detail}>{formatDateTime(item.event_date)} • {item.type}</Text><Text style={styles.status}>{item.status === 'confirmed' ? 'Confirmé' : item.status === 'cancelled' ? 'Annulé' : 'En attente'}</Text><Text style={styles.detail}>Traité le: {formatDateTime(item.confirmed_at)} • Par: {item.confirmed_by ?? '—'}</Text><Text style={styles.detail}>{item.description || item.confirmation_message || 'Aucun détail.'}</Text>{permissions.export_event_reports && <TouchableOpacity style={styles.exportLink} onPress={() => selectExportItem('evenements', item)}><MaterialIcons name={selectedExportIds.includes(item.id ?? -1) ? 'check-box' : 'check-box-outline-blank'} size={17} color={Colors.primary} /><Text style={styles.actionText}>Sélectionner</Text></TouchableOpacity>}</View>)}<Modal transparent visible={!!exportTarget} onRequestClose={() => setExportTarget(null)}><View style={styles.overlay}><View style={styles.modal}><Text style={styles.modalTitle}>Options d’export ({exportTarget?.items.length ?? 0})</Text><TouchableOpacity style={styles.option} onPress={() => void exportPdf()}><MaterialIcons name="picture-as-pdf" size={21} color={Colors.primary} /><Text style={styles.optionText}>PDF</Text></TouchableOpacity><TouchableOpacity style={styles.option} onPress={() => void exportExcel()}><MaterialIcons name="table-chart" size={21} color={Colors.primary} /><Text style={styles.optionText}>Excel (CSV)</Text></TouchableOpacity><TouchableOpacity onPress={() => setExportTarget(null)}><Text style={styles.cancel}>Annuler</Text></TouchableOpacity></View></View></Modal><Modal transparent visible={!!notificationReport} onRequestClose={() => setNotificationReport(null)}><View style={styles.overlay}><View style={styles.modal}><Text style={styles.modalTitle}>Notifier la ferme</Text><TextInput style={styles.input} placeholder="Message à envoyer" value={message} onChangeText={setMessage} multiline /><TouchableOpacity style={styles.exportButton} onPress={() => void notify()}><Text style={styles.exportText}>Envoyer</Text></TouchableOpacity><TouchableOpacity onPress={() => setNotificationReport(null)}><Text style={styles.cancel}>Annuler</Text></TouchableOpacity></View></View></Modal></ScrollView></ScreenShell>;
