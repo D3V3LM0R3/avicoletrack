@@ -9,6 +9,7 @@ import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { FormField } from '@/components/ui/FormField';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { createInvitation, listFarmInvitations, listFarmMembers, listFarms, setMemberActive, updateMember, updateMemberPermissions, type Farm } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 interface Member { membershipId: number; id: number; initials: string; name: string; email: string; role: 'Gestionnaire' | 'Éleveur'; farmId: number; farmName: string; active: boolean; permissions: Record<string, boolean>; }
 type InviteStatus = 'active' | 'expired' | 'used' | 'revoked';
@@ -35,6 +36,7 @@ const INVITATION_BASE_URL = (process.env.EXPO_PUBLIC_INVITATION_BASE_URL || 'htt
 const makeLink = (token: string) => `${INVITATION_BASE_URL}?token=${encodeURIComponent(token)}`;
 
 export default function PersonnelScreen() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<'members' | 'invites'>('members');
   const [search, setSearch] = useState('');
   const [members, setMembers] = useState(INITIAL_MEMBERS);
@@ -185,23 +187,23 @@ export default function PersonnelScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Gestion du Personnel" onBack={() => router.back()} />
+      <SubScreenHeader title={t('staffTitle')} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitle}>Gérez les accès et les rôles de votre équipe agricole.</Text>
+        <Text style={styles.subtitle}>{t('staffSubtitle')}</Text>
 
         <View style={styles.tabs}>
           <TouchableOpacity style={[styles.tab, tab === 'members' && styles.tabActive]} onPress={() => { setTab('members'); setSearch(''); }}>
-            <Text style={[styles.tabText, tab === 'members' && styles.tabTextActive]}>Membres ({members.length})</Text>
+            <Text style={[styles.tabText, tab === 'members' && styles.tabTextActive]}>{t('membersTab')} ({members.length})</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tab, tab === 'invites' && styles.tabActive]} onPress={() => { setTab('invites'); setSearch(''); }}>
-            <Text style={[styles.tabText, tab === 'invites' && styles.tabTextActive]}>Invitations ({invitations.length})</Text>
+            <Text style={[styles.tabText, tab === 'invites' && styles.tabTextActive]}>{t('invitationsTab')} ({invitations.length})</Text>
           </TouchableOpacity>
         </View>
 
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={Colors.primary} size="small" />
-            <Text style={styles.loadingText}>Chargement du personnel…</Text>
+            <Text style={styles.loadingText}>{t('loadingStaff')}</Text>
           </View>
         ) : (
           <>
@@ -210,7 +212,7 @@ export default function PersonnelScreen() {
                 <MaterialIcons name="search" size={18} color={Colors.outline} />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder={tab === 'members' ? 'Rechercher un membre...' : 'Rechercher un e-mail invité...'}
+                  placeholder={tab === 'members' ? t('searchMembers') : t('searchInvites')}
                   value={search}
                   onChangeText={setSearch}
                   placeholderTextColor={Colors.outline}
@@ -219,7 +221,7 @@ export default function PersonnelScreen() {
               {tab === 'members' && (
                 <TouchableOpacity style={styles.filterBtn} activeOpacity={0.8} onPress={() => setShowFilter(true)}>
                   <MaterialIcons name="filter-list" size={18} color={Colors.onSurface} />
-                  <Text style={styles.filterText}>Filtrer</Text>
+                  <Text style={styles.filterText}>{t('filterLabel')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -228,8 +230,8 @@ export default function PersonnelScreen() {
               filteredMembers.length === 0 ? (
                 <View style={styles.empty}>
                   <MaterialIcons name="people-outline" size={44} color={Colors.outline} />
-                  <Text style={styles.emptyTitle}>Aucun membre trouvé</Text>
-                  <Text style={styles.emptyText}>Modifiez votre recherche ou vos filtres.</Text>
+                  <Text style={styles.emptyTitle}>{t('noMembers')}</Text>
+                  <Text style={styles.emptyText}>{t('modifySearch')}</Text>
                 </View>
               ) : (
                 filteredMembers.map((m) => (

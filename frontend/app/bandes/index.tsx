@@ -11,6 +11,7 @@ import { FormField } from '@/components/ui/FormField';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { createFlock, getFarmPermissionState, listEvents, listFlockRacePresets, listFlocks, listFarms, updateFlock, type Event, type Farm, type Flock as ApiFlock } from '@/lib/api';
 import { enqueueOfflineItem } from '@/lib/offline-sync';
+import { useI18n } from '@/lib/i18n';
 
 /* ================= HELPERS ================= */
 
@@ -51,6 +52,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 export default function BandesScreen() {
+  const { t } = useI18n();
   const [flocks, setFlocks] = useState(INITIAL_FLOCKS);
   const [filter, setFilter] = useState<FilterKey>('toutes');
   const [menuFlock, setMenuFlock] = useState<Flock | null>(null);
@@ -214,7 +216,7 @@ export default function BandesScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Bandes" onBack={() => router.back()} />
+      <SubScreenHeader title={t('flockTitle')} onBack={() => router.back()} />
 
       {toast !== '' && (
         <View style={styles.toast}>
@@ -231,7 +233,7 @@ export default function BandesScreen() {
         ))}
         {eventTypes.length > 0 && (
           <TouchableOpacity style={[styles.chip, selectedEventType === 'all' && styles.chipActive]} onPress={() => setSelectedEventType('all')}>
-            <Text style={[styles.chipText, selectedEventType === 'all' && styles.chipTextActive]}>Tous événements</Text>
+            <Text style={[styles.chipText, selectedEventType === 'all' && styles.chipTextActive]}>{t('all')}</Text>
           </TouchableOpacity>
         )}
         {eventTypes.map((eventType) => (
@@ -247,16 +249,16 @@ export default function BandesScreen() {
 
       <View style={styles.searchBox}>
         <MaterialIcons name="search" size={20} color={Colors.onSurfaceVariant} />
-        <TextInput placeholder="Rechercher une bande ou une ferme" value={search} onChangeText={setSearch} style={styles.searchInput} />
+        <TextInput placeholder={t('searchFlocks')} value={search} onChangeText={setSearch} style={styles.searchInput} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitle}>Gérez vos lots de volailles en cours.</Text>
+        <Text style={styles.subtitle}>{t('manageFlockHint')}</Text>
 
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={Colors.primary} size="small" />
-            <Text style={styles.loadingText}>Chargement des bandes…</Text>
+            <Text style={styles.loadingText}>{t('loadingFlocks')}</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.empty}>

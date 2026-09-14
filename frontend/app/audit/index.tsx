@@ -5,8 +5,10 @@ import { router } from 'expo-router';
 import { listDailyReports, listEvents, type DailyReport, type Event } from '@/lib/api';
 import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
+import { useI18n } from '@/lib/i18n';
 
 export default function AuditScreen() {
+  const { t } = useI18n();
   const [reports, setReports] = useState<DailyReport[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
 
@@ -24,11 +26,11 @@ export default function AuditScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Audit & Historique" onBack={() => router.back()} />
+      <SubScreenHeader title={t('auditTitle')} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.subtitle}>Les dernières opérations visibles sur vos fermes.</Text>
+        <Text style={styles.subtitle}>{t('auditSubtitle')}</Text>
         {entries.length === 0 ? (
-          <View style={styles.empty}><MaterialIcons name="history" size={48} color={Colors.outline} /><Text style={styles.emptyTitle}>Aucun historique</Text><Text style={styles.emptyText}>Les rapports et événements apparaîtront ici.</Text></View>
+          <View style={styles.empty}><MaterialIcons name="history" size={48} color={Colors.outline} /><Text style={styles.emptyTitle}>{t('noHistory')}</Text><Text style={styles.emptyText}>{t('noHistoryHint')}</Text></View>
         ) : entries.map((entry) => (
           <View key={entry.id} style={styles.row}>
             <View style={styles.icon}><MaterialIcons name={entry.icon} size={20} color={Colors.primary} /></View>

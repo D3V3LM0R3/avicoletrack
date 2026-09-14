@@ -7,6 +7,7 @@ import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-
 import { ScreenShell } from '@/components/ui/ScreenShell';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { api } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 type ConversationPreview = {
   id: number;
@@ -29,6 +30,7 @@ type ConversationPreview = {
 type ChatContact = { id: number; name: string; email: string; role: string };
 
 export default function ChatScreen() {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<ConversationPreview[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -53,11 +55,11 @@ export default function ChatScreen() {
       setContacts(contactsResponse.data);
     } catch {
       console.error('Error loading conversations');
-      setError('Erreur lors du chargement des conversations');
+      setError(t('error.loading_data'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -122,13 +124,13 @@ export default function ChatScreen() {
       <View style={styles.container}>
         {/* Header with search and create button */}
         <View style={styles.headerSection}>
-          <Text style={styles.title}>Messages</Text>
+          <Text style={styles.title}>{t('chatTitle')}</Text>
           <View style={styles.headerActions}>
             <View style={styles.searchBox}>
               <MaterialIcons name="search" size={20} color={Colors.onSurfaceVariant} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Chercher..."
+                placeholder={t('searchConversations')}
                 placeholderTextColor={Colors.onSurfaceVariant}
                 value={searchText}
                 onChangeText={setSearchText}
@@ -148,8 +150,8 @@ export default function ChatScreen() {
         {!loading && filteredConversations.length === 0 && (
           <View style={styles.emptyState}>
             <MaterialIcons name="chat-bubble-outline" size={48} color={Colors.onSurfaceVariant} />
-            <Text style={styles.emptyText}>Aucune conversation</Text>
-            <Text style={styles.emptySubtext}>Créez une nouvelle conversation pour commencer</Text>
+            <Text style={styles.emptyText}>{t('noConversation')}</Text>
+            <Text style={styles.emptySubtext}>{t('createConversationHint')}</Text>
           </View>
         )}
 
@@ -216,7 +218,7 @@ export default function ChatScreen() {
             <View style={styles.modalCard}>
               <View style={styles.modalHandle} />
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Nouvelle conversation</Text>
+                <Text style={styles.modalTitle}>{t('newConversation')}</Text>
                 <TouchableOpacity onPress={() => { setShowCreateModal(false); setCreateError(''); }} hitSlop={10}>
                   <MaterialIcons name="close" size={22} color={Colors.onSurfaceVariant} />
                 </TouchableOpacity>
@@ -228,7 +230,7 @@ export default function ChatScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                <Text style={styles.label}>Type de conversation</Text>
+                <Text style={styles.label}>{t('conversationType')}</Text>
                 <View style={styles.typeSelector}>
                   {(['GROUP', 'DIRECT'] as const).map((type) => (
                     <TouchableOpacity
@@ -256,7 +258,7 @@ export default function ChatScreen() {
                           newConvType === type && styles.typeOptionTextActive,
                         ]}
                       >
-                        {type === 'GROUP' ? 'Groupe' : 'Direct'}
+                        {type === 'GROUP' ? t('group') : t('direct')}
                       </Text>
                     </TouchableOpacity>
                   ))}

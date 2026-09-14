@@ -8,6 +8,7 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { enqueueOfflineItem } from '@/lib/offline-sync';
+import { useI18n } from '@/lib/i18n';
 
 type CurrentUser = { id?: number; name?: string; role?: string } | null;
 type StatusFilter = 'all' | 'pending' | 'confirmed' | 'cancelled';
@@ -35,6 +36,7 @@ const formatDateTime = (value?: string | null) => {
 };
 
 export default function EvenementsScreen() {
+  const { t } = useI18n();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [flocks, setFlocks] = useState<Flock[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -148,7 +150,7 @@ export default function EvenementsScreen() {
 
   const startEdit = (event: Event) => {
     if (event.status !== 'pending') {
-      Alert.alert('Événement verrouillé', 'Seuls les événements en attente peuvent être modifiés.');
+      Alert.alert(t('eventLocked'), t('eventPendingOnly'));
       return;
     }
     setEditingEvent(event);
@@ -245,7 +247,7 @@ export default function EvenementsScreen() {
 
   const handleEventPress = (event: Event) => {
     if (event.status !== 'pending') {
-      Alert.alert('État de l\'événement', `Cet événement est déjà ${STATUS_META[event.status as Exclude<StatusFilter, 'all'>].label.toLowerCase()}.`);
+      Alert.alert(t('eventTitle'), `Cet événement est déjà ${STATUS_META[event.status as Exclude<StatusFilter, 'all'>].label.toLowerCase()}.`);
       return;
     }
     Alert.alert(
@@ -342,7 +344,7 @@ export default function EvenementsScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Événements" onBack={() => router.back()} />
+      <SubScreenHeader title={t('eventTitle')} onBack={() => router.back()} />
 
       <View style={styles.searchBox}>
         <MaterialIcons name="search" size={20} color={Colors.onSurfaceVariant} />

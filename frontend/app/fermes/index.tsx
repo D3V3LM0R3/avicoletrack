@@ -10,12 +10,14 @@ import { FormField } from '@/components/ui/FormField';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { createFarm, listDailyReports, listFarmMembers, listFarms, listFlocks, updateFarm, type Farm as ApiFarm } from '@/lib/api';
 import { enqueueOfflineItem } from '@/lib/offline-sync';
+import { useI18n } from '@/lib/i18n';
 
 interface Farm extends ApiFarm { members: number; flocks: number; }
 
 const INITIAL: Farm[] = [];
 
 export default function FermesScreen() {
+  const { t } = useI18n();
   const [farms, setFarms] = useState(INITIAL);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
@@ -104,7 +106,7 @@ export default function FermesScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Fermes" onBack={() => router.back()} />
+      <SubScreenHeader title={t('farmsTitle')} onBack={() => router.back()} />
       {toast !== '' && (
         <View style={styles.toast}>
           <MaterialIcons name="check-circle" size={16} color={Colors.primary} />
@@ -115,7 +117,7 @@ export default function FermesScreen() {
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={Colors.primary} size="small" />
-            <Text style={styles.loadingText}>Chargement des fermes…</Text>
+            <Text style={styles.loadingText}>{t('loadingFarms')}</Text>
           </View>
         ) : farms.map((f) => (
           <TouchableOpacity key={f.id} style={styles.card} activeOpacity={0.85} onPress={() => router.push(`/fermes/${f.id}` as Href)}>
@@ -129,7 +131,7 @@ export default function FermesScreen() {
               </View>
               <View style={[styles.statusBadge, !f.active && styles.statusBadgeInactive]}>
                 <Text style={[styles.statusText, !f.active && styles.statusTextInactive]}>
-                  {f.active ? 'Active' : 'Inactive'}
+                  {f.active ? t('activeStatus') : t('inactiveStatus')}
                 </Text>
               </View>
             </View>
@@ -141,13 +143,13 @@ export default function FermesScreen() {
             <TouchableOpacity style={styles.toggleBtn} onPress={() => toggleActive(f)}>
               <MaterialIcons name={f.active ? 'block' : 'check-circle'} size={16} color={f.active ? Colors.error : Colors.primary} />
               <Text style={[styles.toggleText, { color: f.active ? Colors.error : Colors.primary }]}>
-                {f.active ? 'Désactiver' : 'Réactiver'}
+                {f.active ? t('enableFarm') : t('disableFarm')}
               </Text>
             </TouchableOpacity>
           </TouchableOpacity>
         ))}
 
-        <PrimaryButton label="Nouvelle ferme" icon="add-business" onPress={() => setShowCreate(true)} />
+        <PrimaryButton label={t('createFarm')} icon="add-business" onPress={() => setShowCreate(true)} />
       </ScrollView>
 
       <Modal transparent animationType="slide" visible={showCreate} onRequestClose={() => setShowCreate(false)}>
@@ -155,7 +157,7 @@ export default function FermesScreen() {
           <View style={styles.modalCard}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Créer une ferme</Text>
+              <Text style={styles.modalTitle}>{t('createFarm')}</Text>
               <TouchableOpacity onPress={() => setShowCreate(false)} hitSlop={10}>
                 <MaterialIcons name="close" size={22} color={Colors.onSurfaceVariant} />
               </TouchableOpacity>
@@ -166,9 +168,9 @@ export default function FermesScreen() {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              <FormField label="Nom de la ferme" icon="business" placeholder="Ferme de ..." value={name} onChangeText={(t) => { setName(t); setNameError(''); }} />
+              <FormField label={t('farmNameLabel')} icon="business" placeholder="Ferme de ..." value={name} onChangeText={(t) => { setName(t); setNameError(''); }} />
               {nameError !== '' && <Text style={styles.errorText}>{nameError}</Text>}
-              <FormField label="Localisation" icon="location-on" placeholder="Ville, région" value={location} onChangeText={setLocation} />
+              <FormField label={t('locationLabel')} icon="location-on" placeholder="Ville, région" value={location} onChangeText={setLocation} />
               <PrimaryButton label={saving ? 'Création...' : 'Créer la ferme'} onPress={handleCreate} disabled={saving} />
             </ScrollView>
           </View>

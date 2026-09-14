@@ -9,6 +9,7 @@ import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { flushOfflineQueue, loadOfflineQueue, LAST_SYNC_KEY, saveOfflineQueue, syncOfflineItem, type OfflineQueueItem } from '@/lib/offline-sync';
+import { useI18n } from '@/lib/i18n';
 
 /* ================= TYPES & HELPERS ================= */
 
@@ -59,6 +60,7 @@ const STATUS_CONFIG: Record<ItemStatus, { label: string; icon: any; bg: string; 
 };
 
 export default function SyncScreen() {
+  const { t } = useI18n();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
@@ -164,7 +166,7 @@ export default function SyncScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Centre de Synchronisation" onBack={() => router.back()} />
+      <SubScreenHeader title={t('syncCenter')} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.subtitle}>Gérez le transfert de vos données vers le serveur central.</Text>
 

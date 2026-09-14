@@ -5,8 +5,10 @@ import { router } from 'expo-router';
 import { compareFarms, listFarms, type Farm, type FarmComparison } from '@/lib/api';
 import { Colors, Spacing, Typography } from '@/constants/design-system';
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
+import { useI18n } from '@/lib/i18n';
 
 export default function AnalyseScreen() {
+  const { t } = useI18n();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [rows, setRows] = useState<FarmComparison[]>([]);
 
@@ -19,27 +21,27 @@ export default function AnalyseScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Analyse multi-fermes" onBack={() => router.back()} />
+      <SubScreenHeader title={t('comparisonTitle')} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.subtitle}>{farms.length} ferme{farms.length > 1 ? 's' : ''} connectée{farms.length > 1 ? 's' : ''}</Text>
+        <Text style={styles.subtitle}>{farms.length} {farms.length > 1 ? t('connectedFarmsPlural') : t('connectedFarms')}</Text>
         {rows.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Graphiques comparatifs</Text>
-            <ComparisonChart title="Effectif actuel" rows={rows} farms={farms} getValue={(row) => row.hens_reported} unit=" sujets" color={Colors.primary} />
-            <ComparisonChart title="Production d'œufs" rows={rows} farms={farms} getValue={(row) => row.eggs} unit=" œufs" color={Colors.tertiary} />
-            <ComparisonChart title="Taux de ponte" rows={rows} farms={farms} getValue={(row) => row.average_laying_percentage ?? 0} unit=" %" color="#2563EB" decimals />
-            <ComparisonChart title="Mortalité" rows={rows} farms={farms} getValue={(row) => row.mortality} unit=" sujets" color={Colors.error} />
-            <ComparisonChart title="Stock d'œufs" rows={rows} farms={farms} getValue={(row) => row.stock} unit=" œufs" color="#D97706" />
+            <Text style={styles.sectionTitle}>{t('comparisonCharts')}</Text>
+            <ComparisonChart title={t('effectifCurrent')} rows={rows} farms={farms} getValue={(row) => row.hens_reported} unit=" sujets" color={Colors.primary} />
+            <ComparisonChart title={t('eggsProducedChart')} rows={rows} farms={farms} getValue={(row) => row.eggs} unit=" œufs" color={Colors.tertiary} />
+            <ComparisonChart title={t('layingRate')} rows={rows} farms={farms} getValue={(row) => row.average_laying_percentage ?? 0} unit=" %" color="#2563EB" decimals />
+            <ComparisonChart title={t('mortality')} rows={rows} farms={farms} getValue={(row) => row.mortality} unit=" sujets" color={Colors.error} />
+            <ComparisonChart title={t('eggStockChart')} rows={rows} farms={farms} getValue={(row) => row.stock} unit=" œufs" color="#D97706" />
           </>
         )}
-        <Text style={styles.sectionTitle}>Tableau détaillé</Text>
+        <Text style={styles.sectionTitle}>{t('detailedTable')}</Text>
         <View style={styles.table}>
           <View style={[styles.row, styles.header]}><Text style={[styles.cell, styles.label]}>KPI</Text>{farms.map((farm) => <Text key={farm.id} style={[styles.cell, styles.label]}>{farm.name}</Text>)}</View>
           {[['Effectif', (row: FarmComparison) => row.hens_reported], ['Œufs', (row: FarmComparison) => row.eggs], ['Ponte', (row: FarmComparison) => row.average_laying_percentage == null ? '-' : `${row.average_laying_percentage.toFixed(1)} %`], ['Mortalité', (row: FarmComparison) => row.mortality], ['Stock', (row: FarmComparison) => row.stock]].map(([label, getter]) => (
             <View key={String(label)} style={styles.row}><Text style={[styles.cell, styles.label]}>{String(label)}</Text>{farms.map((farm) => { const row = rows.find((item) => item.farm_id === farm.id); return <Text key={farm.id} style={styles.cell}>{row ? String((getter as (value: FarmComparison) => number | string)(row)) : '-'}</Text>; })}</View>
           ))}
         </View>
-        {!farms.length && <View style={styles.empty}><MaterialIcons name="insights" size={40} color={Colors.outline} /><Text style={styles.emptyText}>Créez une ferme pour commencer la comparaison.</Text></View>}
+        {!farms.length && <View style={styles.empty}><MaterialIcons name="insights" size={40} color={Colors.outline} /><Text style={styles.emptyText}>{t('createFarmHint')}</Text></View>}
       </ScrollView>
     </View>
   );

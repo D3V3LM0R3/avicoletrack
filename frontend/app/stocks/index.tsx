@@ -7,6 +7,7 @@ import { Colors, Radius, Shadow, Spacing, Typography } from '@/constants/design-
 import { SubScreenHeader } from '@/components/ui/SubScreenHeader';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { formatEggStock, getCurrentUser, listFarms, listFlocks, listStockMovements, validateStockMovement, type StockMovement } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const formatNumber = (v: number) => v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -60,6 +61,7 @@ const getStatus = (s: StockItem): StockStatus => {
 };
 
 export default function StocksScreen() {
+  const { t } = useI18n();
   const [stocks, setStocks] = useState<StockItem[]>([]);
   const [editing, setEditing] = useState<StockItem | null>(null);
   const [newThreshold, setNewThreshold] = useState('');
@@ -158,7 +160,7 @@ export default function StocksScreen() {
 
   return (
     <View style={styles.container}>
-      <SubScreenHeader title="Gestion des Stocks" onBack={() => router.back()} />
+      <SubScreenHeader title={t('inventory')} onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.subtitle}>Vue d&apos;ensemble de l&apos;inventaire en temps réel</Text>
 
