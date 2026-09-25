@@ -38,9 +38,10 @@ jobs:
         env:
           EXPO_PUBLIC_API_URL: https://avicoletrack.fastapicloud.dev
           EXPO_PUBLIC_INVITATION_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/register-invitation
-          EXPO_PUBLIC_WEB_BASE_PATH: /avicoletrack
+          EXPO_PUBLIC_WEB_BASE_PATH: /${{ github.event.repository.name }}
         run: |
           npx expo export --platform web
+          test -s dist/index.html
           cp dist/index.html dist/404.html
 
       - name: Upload Pages artifact
