@@ -48,6 +48,7 @@ jobs:
         with:
           path: frontend/dist
 
+
   deploy:
     environment:
       name: github-pages
