@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from urllib.parse import urlsplit
 
 from app.core.config import settings
@@ -70,3 +71,12 @@ def root():
         "version": "0.1.0",
         "status": "running",
     }
+
+
+@app.get("/app", include_in_schema=False)
+@app.get("/app/{path:path}", include_in_schema=False)
+def frontend_fallback(path: str = ""):
+    target = settings.frontend_fallback_url.rstrip("/")
+    if path:
+        target = f"{target}/{path.lstrip('/')}"
+    return RedirectResponse(target, status_code=307)

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     database_url: str
 
     frontend_url: str = "https://avicoletrack.cm"
+    frontend_fallback_url: str = "https://avicoletrack-gules.vercel.app"
 
     jwt_secret: str
     jwt_algorithm: str = "HS256"

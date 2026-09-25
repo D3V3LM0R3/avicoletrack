@@ -36,10 +36,13 @@ EXPO_PUBLIC_INVITATION_BASE_URL=https://d3v3lm0r3.github.io/avicoletrack/registe
 For GitHub Pages builds, the workflow sets:
 
 ```text
-EXPO_PUBLIC_WEB_BASE_PATH=/avicoletrack
+EXPO_PUBLIC_WEB_BASE_PATH=/<repository-name>
 ```
 
-Vercel must build from the `frontend` directory with no `/avicoletrack` base path.
+Vercel must build from the `frontend` directory with no repository base path. The
+frontend has `frontend/vercel.json`, which exports the Expo web app and rewrites
+extensionless client routes to the app entry point so browser reloads do not
+return a Vercel 404.
 
 ### Backend
 
@@ -66,12 +69,17 @@ RESEND_FROM_EMAIL=<verified Resend sender>
 `FRONTEND_URL` should be the frontend origin without a trailing slash. For the current Vercel deployment:
 
 ```text
-FRONTEND_URL=https://d3v3lm0r3.github.io/avicoletrack
+FRONTEND_URL=https://avicoletrack-gules.vercel.app
+FRONTEND_FALLBACK_URL=https://avicoletrack-gules.vercel.app
 ```
 
-The backend uses `FRONTEND_URL` for CORS and for verification/password-reset links.
-Because GitHub Pages serves this app from `/avicoletrack`, keep that path in
-`FRONTEND_URL` or email links will open the wrong location.
+The backend uses `FRONTEND_URL` for CORS and verification/password-reset links.
+`FRONTEND_FALLBACK_URL` powers the stable backup URL
+`https://avicoletrack.fastapicloud.dev/app`, which redirects to Vercel. Use that
+backend URL when GitHub Pages is unavailable. It also accepts a path such as
+`/app/register-invitation` and forwards it to the matching Vercel path.
+Do not set `FRONTEND_URL` to GitHub Pages if Vercel is the active frontend,
+because email links and CORS must point to the frontend users actually use.
 Set `EMAIL_PROVIDER=smtp` for the Gmail demo configuration below. Set it to
 `resend` for Resend, or `auto` to try Resend first and then SMTP. SMTP supports
 Gmail on port 587 with STARTTLS or port 465 with `SMTP_USE_SSL=true` and
