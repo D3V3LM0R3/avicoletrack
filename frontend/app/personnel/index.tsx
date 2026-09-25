@@ -32,8 +32,14 @@ const EXPIRY_OPTIONS = [
   { key: '7j', label: '7 jours', hours: 168 },
 ];
 
-const INVITATION_BASE_URL = (process.env.EXPO_PUBLIC_INVITATION_BASE_URL || 'https://avicoletrack.cm/register-invitation').replace(/\/+$/, '');
-const makeLink = (token: string) => `${INVITATION_BASE_URL}?token=${encodeURIComponent(token)}`;
+const makeLink = (token: string) => {
+  const configuredBaseUrl = (process.env.EXPO_PUBLIC_INVITATION_BASE_URL || 'https://avicoletrack.cm/register-invitation').replace(/\/+$/, '');
+  if (typeof window === 'undefined') return `${configuredBaseUrl}?token=${encodeURIComponent(token)}`;
+
+  const basePath = process.env.EXPO_PUBLIC_WEB_BASE_PATH || '';
+  const invitationUrl = `${window.location.origin}${basePath}/register-invitation`;
+  return `${invitationUrl}?token=${encodeURIComponent(token)}`;
+};
 
 export default function PersonnelScreen() {
   const { t } = useI18n();

@@ -7,12 +7,22 @@ import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { listFarms } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth-storage';
 
+const VERCEL_FALLBACK_URL = 'https://avicoletrack-gules.vercel.app';
+
 export default function Index() {
   const [isLoading, setIsLoading] = useState(true);
   const [route, setRoute] = useState<Href>('/(auth)/onboarding');
 
   useEffect(() => {
     const timeout = setTimeout(() => setIsLoading(false), 5000);
+    const fallbackTimeout = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
+      ? setTimeout(() => {
+          const path = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+          const repositoryPath = /^\/[^/]+/.exec(path)?.[0] ?? '';
+          const appPath = path.startsWith(repositoryPath) ? path.slice(repositoryPath.length) : path;
+          window.location.replace(`${VERCEL_FALLBACK_URL}${appPath || '/'}`);
+        }, 10000)
+      : undefined;
 
     const checkAppState = async () => {
       try {
@@ -46,7 +56,10 @@ export default function Index() {
     };
 
     checkAppState();
-    return () => clearTimeout(timeout);
+    return () => {
+      clearTimeout(timeout);
+      if (fallbackTimeout) clearTimeout(fallbackTimeout);
+    };
   }, []);
 
   if (isLoading) {
